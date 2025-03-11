@@ -1,3 +1,10 @@
+export enum CharacterClass {
+  Warrior = "Warrior",
+  Mage = "Mage",
+  Archer = "Rogue",
+  Healer = "Priest",
+}
+
 export interface Character {
   id: number;
   name: string;
@@ -7,7 +14,7 @@ export interface Character {
   baseAgility: number;
   baseIntelligence: number;
   baseFaith: number;
-  characterClass: string;
+  characterClass: CharacterClass;
   items: string[];
   createdBy: number;
 }

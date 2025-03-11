@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import pool from "../utils/db";
+import { Item } from "../entities/item";
 
 export const getAllItems = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   try {
     const items = await getItems();
     res.status(201).json({ items });
@@ -19,7 +20,10 @@ export const getItems = async () => {
   return result.rows;
 };
 
-export const createItem = async (req: Request, res: Response): Promise<any> => {
+export const createItem = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   console.log(req.body);
 
   const {
@@ -29,7 +33,7 @@ export const createItem = async (req: Request, res: Response): Promise<any> => {
     bonus_faith,
     description,
     name,
-  } = req.body;
+  }: Item = req.body;
 
   const result = await pool.query(
     "INSERT INTO items (name, description, bonus_strength, bonus_agility, bonus_intelligence, bonus_faith) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
@@ -49,14 +53,14 @@ export const createItem = async (req: Request, res: Response): Promise<any> => {
 export const getItemDetails = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   try {
     const result = await pool.query("SELECT * FROM items WHERE id = $1", [
       req.params.id,
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Item not found" });
+      res.status(404).json({ message: "Item not found" });
     }
 
     const item = result.rows[0];

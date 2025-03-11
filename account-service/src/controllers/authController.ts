@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByUsername, getUsers } from "../models/userModel";
 import bcrypt from "bcryptjs";
+import { User } from "../entities/user";
+import pool from "../utils/db";
 
 export const getAllUsers = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   try {
     const users = await getUsers();
     res.status(201).json({ users });
@@ -16,16 +17,41 @@ export const getAllUsers = async (
   }
 };
 
+export const getUsers = async () => {
+  const result = await pool.query("SELECT * FROM users");
+  return result.rows;
+};
+
+export const createUser = async (
+  username: string,
+  password: string,
+  role: string = "User"
+): Promise<User> => {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const result = await pool.query(
+    "INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id, username, role",
+    [username, hashedPassword, role]
+  );
+  return result.rows[0];
+};
+
+export const findUserByUsername = async (
+  username: string
+): Promise<User | null> => {
+  const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+    username,
+  ]);
+  return result.rows[0] || null;
+};
+
 export const registerUser = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   const { username, password, role } = req.body;
 
   if (!username || !password) {
-    return res
-      .status(400)
-      .json({ message: "Username and password are required" });
+    res.status(400).json({ message: "Username and password are required" });
   }
 
   try {
@@ -37,30 +63,31 @@ export const registerUser = async (
   }
 };
 
-export const loginUser = async (req: Request, res: Response): Promise<any> => {
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
 
   console.log("LOGIN HIT");
 
   if (!username || !password) {
-    return res
-      .status(400)
-      .json({ message: "Username and password are required" });
+    res.status(400).json({ message: "Username and password are required" });
+    return;
   }
 
   try {
-    const user = await findUserByUsername(username);
+    const user: User | null = await findUserByUsername(username);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      res.status(400).json({ message: "Invalid credentials" });
+      return;
     }
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role },
+      { userId: user?.id, username: user?.username, role: user?.role },
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );

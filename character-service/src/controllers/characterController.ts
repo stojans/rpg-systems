@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import pool from "../utils/db";
+import { Character, CharacterClass } from "../entities/character";
 
 export const getAllCharacters = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   try {
     const characters = await getCharacters();
     res.status(201).json({ characters });
@@ -22,17 +23,17 @@ const getCharacters = async () => {
 export const getCharacter = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<void> => {
   try {
     const result = await pool.query("SELECT * FROM characters WHERE id = $1", [
       req.params.id,
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Character not found" });
+      res.status(404).json({ message: "Character not found" });
     }
 
-    const character = result.rows[0];
+    const character: Character = result.rows[0];
 
     res.status(200).json({ character: character });
   } catch (error) {
@@ -52,20 +53,41 @@ const getUserById = async (userId: number) => {
 export const createCharacter = async (
   req: Request,
   res: Response
-): Promise<any> => {
-  const { createdBy } = req.body;
+): Promise<void> => {
+  const {
+    name,
+    health,
+    mana,
+    baseStrength,
+    baseAgility,
+    baseIntelligence,
+    baseFaith,
+    characterClass,
+    createdBy,
+  }: Character = req.body;
   console.log(req.body);
 
+  // Check if user in createdBy exists
   if (!(await getUserById(createdBy))) {
-    return res.status(404).json({ message: "User not found" });
+    res.status(404).json({ message: "User not found" });
   }
 
+  // Validate character class
+  if (
+    !Object.values(CharacterClass).includes(characterClass as CharacterClass)
+  ) {
+    res
+      .status(400)
+      .json({ message: `Invalid character class "${characterClass}".` });
+  }
+
+  // Check if char name already exists
   const nameCheck = await pool.query(
     "SELECT 1 FROM characters WHERE name = $1",
     [req.body.name]
   );
   if (nameCheck && nameCheck.rowCount && nameCheck.rowCount > 0) {
-    return res
+    res
       .status(400)
       .json({ message: `Character name "${req.body.name}" already exists.` });
   }
@@ -73,18 +95,21 @@ export const createCharacter = async (
   const result = await pool.query(
     "INSERT INTO characters (name, health, mana, base_strength, base_agility, base_intelligence, base_faith, character_class, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
     [
-      req.body.name,
-      req.body.health,
-      req.body.mana,
-      req.body.baseStrength,
-      req.body.baseAgility,
-      req.body.baseIntelligence,
-      req.body.baseFaith,
-      req.body.characterClass,
-      req.body.createdBy,
+      name,
+      health,
+      mana,
+      baseStrength,
+      baseAgility,
+      baseIntelligence,
+      baseFaith,
+      characterClass,
+      createdBy,
     ]
   );
-  res.status(201).json({ message: `Character ${req.body.name} created!` });
+  res.status(201).json({
+    message: `Character ${req.body.name} created!`,
+    character: result.rows[0],
+  });
 
   //   return result.rows[0];
 };
