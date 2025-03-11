@@ -35,7 +35,17 @@ export const createCharacter = async (
   console.log(req.body);
 
   if (!(await getUserById(createdBy))) {
-    res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const nameCheck = await pool.query(
+    "SELECT 1 FROM characters WHERE name = $1",
+    [req.body.name]
+  );
+  if (nameCheck && nameCheck.rowCount && nameCheck.rowCount > 0) {
+    return res
+      .status(400)
+      .json({ message: `Character name "${req.body.name}" already exists.` });
   }
 
   const result = await pool.query(
@@ -52,7 +62,7 @@ export const createCharacter = async (
       req.body.createdBy,
     ]
   );
-  res.status(200).json({ message: `Character ${req.body.name} created!` });
+  res.status(201).json({ message: `Character ${req.body.name} created!` });
 
-  return result.rows[0];
+  //   return result.rows[0];
 };
