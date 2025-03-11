@@ -8,6 +8,11 @@ export interface User {
   role: string;
 }
 
+export const getUsers = async () => {
+  const result = await pool.query("SELECT * FROM users");
+  return result.rows;
+};
+
 export const createUser = async (
   username: string,
   password: string,

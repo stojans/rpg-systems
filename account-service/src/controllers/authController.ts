@@ -1,7 +1,20 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByUsername } from "../models/userModel";
+import { createUser, findUserByUsername, getUsers } from "../models/userModel";
 import bcrypt from "bcryptjs";
+
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const users = await getUsers();
+    res.status(201).json({ users });
+  } catch (error) {
+    console.error("Error during users fetching:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const registerUser = async (
   req: Request,
