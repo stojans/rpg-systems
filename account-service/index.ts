@@ -13,7 +13,6 @@ app.use("/api/auth", authRoutes);
 const startService = async () => {
   try {
     await pool.connect();
-    console.log("Connected to the database");
 
     app.listen(3001, () => {
       console.log("Account Service running on http://localhost:3001");
