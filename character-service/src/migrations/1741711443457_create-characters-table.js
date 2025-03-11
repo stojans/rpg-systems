@@ -1,21 +1,30 @@
 exports.up = (pgm) => {
-  // Create the foreign server to connect to the account_service database
   pgm.sql(`
       CREATE EXTENSION IF NOT EXISTS postgres_fdw;
   
-      CREATE SERVER account_service_server
+      CREATE SERVER IF NOT EXISTS account_service_server
       FOREIGN DATA WRAPPER postgres_fdw
       OPTIONS (host 'localhost', dbname 'account_service', port '5432');
     `);
 
-  // Create a user mapping for the connection to the account_service database
   pgm.sql(`
-      CREATE USER MAPPING FOR current_user
+      CREATE USER MAPPING IF NOT EXISTS FOR current_user
       SERVER account_service_server
-      OPTIONS (user 'account_service_user', password 'password');
+      OPTIONS (user 'postgres', password 'password');
     `);
 
-  // Create the characters table
+  pgm.sql(`
+        
+        CREATE FOREIGN TABLE IF NOT EXISTS foreign_users (
+        id INTEGER,
+        username VARCHAR(255),
+        password VARCHAR(255),
+        role VARCHAR(20)
+        )
+        SERVER account_service_server
+        OPTIONS (table_name 'users');
+    `);
+
   pgm.createTable("characters", {
     id: {
       type: "serial",
@@ -36,42 +45,40 @@ exports.up = (pgm) => {
       notNull: true,
       default: 100,
     },
-    baseStrength: {
+    base_strength: {
       type: "integer",
       notNull: true,
       default: 10,
     },
-    baseAgility: {
+    base_agility: {
       type: "integer",
       notNull: true,
       default: 10,
     },
-    baseIntelligence: {
+    base_intelligence: {
       type: "integer",
       notNull: true,
       default: 10,
     },
-    baseFaith: {
+    base_faith: {
       type: "integer",
       notNull: true,
       default: 10,
     },
-    class: {
+    character_class: {
       type: "varchar(100)",
       notNull: true,
     },
-    // createdBy: {
-    //   type: "integer",
-    //   references: "account_service.public.users(id)",
-    //   onDelete: "SET NULL",
-    // },
+    created_by: {
+      type: "integer",
+      notNull: true,
+    },
   });
 };
 
 exports.down = (pgm) => {
   pgm.dropTable("characters");
 
-  // Drop the user mapping and foreign server setup if necessary
   pgm.sql(`
       DROP USER MAPPING IF EXISTS current_user SERVER account_service_server;
       DROP SERVER IF EXISTS account_service_server;

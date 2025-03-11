@@ -14,8 +14,10 @@ const startService = async () => {
   try {
     await pool.connect();
 
-    app.listen(3001, () => {
-      console.log("Account Service running on http://localhost:3001");
+    app.listen(process.env.PORT, () => {
+      console.log(
+        `Account Service running on http://localhost:${process.env.PORT}`
+      );
     });
   } catch (error) {
     console.error("Error starting service:", error);

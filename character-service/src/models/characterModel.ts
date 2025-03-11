@@ -1,5 +1,3 @@
-import pool from "../utils/db";
-
 export interface Character {
   id: number;
   name: string;
@@ -9,12 +7,7 @@ export interface Character {
   baseAgility: number;
   baseIntelligence: number;
   baseFaith: number;
-  class: string;
+  characterClass: string;
   items: string[];
-  createdBy: number | null;
+  createdBy: number;
 }
-
-export const getCharacters = async () => {
-  const result = await pool.query("SELECT * FROM characters");
-  return result.rows;
-};
