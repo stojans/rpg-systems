@@ -19,6 +19,28 @@ const getCharacters = async () => {
   return result.rows;
 };
 
+export const getCharacter = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const result = await pool.query("SELECT * FROM characters WHERE id = $1", [
+      req.params.id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Character not found" });
+    }
+
+    const character = result.rows[0];
+
+    res.status(200).json({ character: character });
+  } catch (error) {
+    console.error("Error fetching character:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const getUserById = async (userId: number) => {
   const result = await pool.query(
     "SELECT id FROM foreign_users WHERE id = $1",
