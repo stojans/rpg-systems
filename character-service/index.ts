@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import characterRoutes from "./src/routes/characterRoutes";
+import itemsRoutes from "./src/routes/itemsRoutes";
 import pool from "./src/utils/db";
 
 dotenv.config();
@@ -9,6 +10,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/character", characterRoutes);
+app.use("/api/items", itemsRoutes);
 
 const startService = async () => {
   try {

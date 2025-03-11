@@ -14,7 +14,7 @@ export const getAllCharacters = async (
   }
 };
 
-export const getCharacters = async () => {
+const getCharacters = async () => {
   const result = await pool.query("SELECT * FROM characters");
   return result.rows;
 };
