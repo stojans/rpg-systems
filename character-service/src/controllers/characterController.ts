@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import pool from "../utils/db";
 import { Character, CharacterClass } from "../entities/character";
 import { Item } from "../entities/item";
+import { ExtendedRequest } from "../middleware/authMiddleware";
 
 export const getAllCharacters = async (
   req: Request,
@@ -13,6 +14,7 @@ export const getAllCharacters = async (
   } catch (error) {
     console.error("Error during characters fetching:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -55,6 +57,7 @@ export const getCharacterWithItems = async (
 
     if (result.rows.length === 0) {
       res.status(404).json({ message: "Character not found" });
+      return;
     }
 
     const character: Character = {
@@ -112,6 +115,7 @@ export const getCharacterWithItems = async (
   } catch (error) {
     console.error("Error fetching character:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -124,7 +128,7 @@ const getUserById = async (userId: number) => {
 };
 
 export const createCharacter = async (
-  req: Request,
+  req: ExtendedRequest,
   res: Response
 ): Promise<void> => {
   const {
@@ -136,13 +140,20 @@ export const createCharacter = async (
     base_intelligence,
     base_faith,
     character_class,
-    created_by,
   }: Character = req.body;
-  console.log(req.body);
 
-  // Check if user in createdBy exists
-  if (!(await getUserById(created_by))) {
+  const user_id = req.user?.userId;
+  console.log("REQW USER: ", user_id);
+
+  // Check if user exists
+  if (!user_id) {
+    res.status(401).json({ message: "Unauthorized, user not found." });
+    return;
+  }
+
+  if (!(await getUserById(user_id))) {
     res.status(404).json({ message: "User not found" });
+    return;
   }
 
   // Validate character class
@@ -152,6 +163,7 @@ export const createCharacter = async (
     res
       .status(400)
       .json({ message: `Invalid character class "${character_class}".` });
+    return;
   }
 
   // Check if char name already exists
@@ -163,6 +175,7 @@ export const createCharacter = async (
     res
       .status(400)
       .json({ message: `Character name "${req.body.name}" already exists.` });
+    return;
   }
 
   const result = await pool.query(
@@ -176,7 +189,7 @@ export const createCharacter = async (
       base_intelligence,
       base_faith,
       character_class,
-      created_by,
+      user_id,
     ]
   );
   res.status(201).json({

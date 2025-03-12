@@ -14,6 +14,7 @@ export const getAllUsers = async (
   } catch (error) {
     console.error("Error during users fetching:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -52,6 +53,7 @@ export const registerUser = async (
 
   if (!username || !password) {
     res.status(400).json({ message: "Username and password are required" });
+    return;
   }
 
   try {
@@ -60,6 +62,7 @@ export const registerUser = async (
   } catch (error) {
     console.error("Error during user registration:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -96,5 +99,6 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("Error during user login:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };

@@ -12,6 +12,7 @@ export const getAllItems = async (
   } catch (error) {
     console.error("Error during items fetching:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -40,10 +41,10 @@ export const createItem = async (
     [
       name,
       description,
-      bonus_strength,
-      bonus_agility,
-      bonus_intelligence,
-      bonus_faith,
+      bonus_strength || 0,
+      bonus_agility || 0,
+      bonus_intelligence || 0,
+      bonus_faith || 0,
     ]
   );
 
@@ -61,6 +62,7 @@ export const getItemDetails = async (
 
     if (result.rows.length === 0) {
       res.status(404).json({ message: "Item not found" });
+      return;
     }
 
     const item = result.rows[0];
@@ -106,6 +108,7 @@ export const getItemDetails = async (
   } catch (error) {
     console.error("Error fetching item:", error);
     res.status(500).json({ message: "Server error" });
+    return;
   }
 };
 
@@ -127,6 +130,7 @@ export const assignItemToChar = async (
   } catch (error) {
     console.error("Error assigning item to character!", error);
     res.status(500).json({ error: "Server error" });
+    return;
   }
 };
 
@@ -137,12 +141,10 @@ export const transferItem = async (
   const { item_id, character_from_id, character_to_id } = req.body;
 
   if (!item_id || !character_from_id || !character_to_id) {
-    res
-      .status(400)
-      .json({
-        message:
-          "Item ID, source character ID and destination character ID are required!",
-      });
+    res.status(400).json({
+      message:
+        "Item ID, source character ID and destination character ID are required!",
+    });
     return;
   }
 
@@ -166,5 +168,6 @@ export const transferItem = async (
     await pool.query("ROLLBACK");
     console.error("Error during item transfer:", error);
     res.status(500).json({ message: "Server error during item transfer." });
+    return;
   }
 };

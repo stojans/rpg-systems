@@ -11,6 +11,6 @@ const router = express.Router();
 
 router.get("/", verifyToken, checkGameMasterRole, getAllCharacters);
 router.get("/:id", getCharacterWithItems);
-router.post("/", createCharacter);
+router.post("/", verifyToken, createCharacter);
 
 export default router;

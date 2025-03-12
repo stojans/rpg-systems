@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-interface ExtendedRequest extends Request {
+export interface ExtendedRequest extends Request {
   user?: {
-    id: number;
+    userId: number;
     username: string;
     role: string;
   };
@@ -25,11 +25,13 @@ export const verifyToken = (
 
   try {
     const decoded = jwt.verify(token, secretKey) as {
-      id: string;
+      userId: number;
       role: string;
     };
 
     (req as any).user = decoded;
+
+    console.log("DECODED: ", decoded);
 
     next();
   } catch (error) {
