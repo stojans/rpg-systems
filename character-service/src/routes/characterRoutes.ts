@@ -5,12 +5,16 @@ import {
   createCharacter,
   getCharacterWithItems,
 } from "../controllers/characterController";
-import { verifyToken, checkGameMasterRole } from "../middleware/authMiddleware";
+import {
+  verifyToken,
+  checkGameMasterRole,
+  checkCharacterOwnership,
+} from "../middleware/authMiddleware";
 
 const router = express.Router();
 
 router.get("/", verifyToken, checkGameMasterRole, getAllCharacters);
-router.get("/:id", getCharacterWithItems);
+router.get("/:id", verifyToken, checkCharacterOwnership, getCharacterWithItems);
 router.post("/", verifyToken, createCharacter);
 
 export default router;

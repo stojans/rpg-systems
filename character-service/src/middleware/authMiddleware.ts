@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import pool from "../utils/db";
+import { createDiffieHellmanGroup } from "crypto";
 
 export interface ExtendedRequest extends Request {
   user?: {
@@ -50,4 +52,48 @@ export const checkGameMasterRole = (
   }
 
   next();
+};
+
+export const checkCharacterOwnership = async (
+  req: ExtendedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const characterId = req.params.id;
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
+
+  console.log(userRole);
+  if (!userId) {
+    res
+      .status(401)
+      .json({ message: "Unauthorized. No user ID found in token." });
+    return;
+  }
+
+  try {
+    // Check if the character was created by the logged-in user OR logged in user is GameMaster
+    const result = await pool.query("SELECT * FROM characters WHERE id = $1", [
+      characterId,
+    ]);
+
+    if (result.rowCount === 0) {
+      res.status(404).json({ message: "Character not found." });
+      return;
+    }
+
+    const character = result.rows[0];
+
+    if (character.created_by !== userId && userRole !== "GameMaster") {
+      res.status(403).json({
+        message: "You do not have permission to access this character.",
+      });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error fetching character:", error);
+    res.status(500).json({ message: "Server error." });
+  }
 };

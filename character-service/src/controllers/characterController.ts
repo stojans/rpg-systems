@@ -40,6 +40,7 @@ export const getCharacterWithItems = async (
         characters.base_agility,
         characters.base_intelligence,
         characters.base_faith,
+        characters.created_by,
         items.id AS item_id, 
         items.name AS item_name, 
         items.description AS item_description,
