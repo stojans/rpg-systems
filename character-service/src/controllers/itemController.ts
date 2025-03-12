@@ -96,10 +96,11 @@ export const getItemDetails = async (
       const lastStat = highestStats.pop();
       nameSuffix = ` of ${highestStats.join(", ")} and ${lastStat}`;
     }
-
-    const itemNameWithSuffix = `${req.body.name}${nameSuffix}`;
-
+    
+    const itemNameWithSuffix = `${item.name}${nameSuffix}`;
+    
     item.name = itemNameWithSuffix;
+    console.log(item);
 
     res.status(200).json({ item: item });
   } catch (error) {

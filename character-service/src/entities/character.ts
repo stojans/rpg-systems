@@ -1,3 +1,5 @@
+import { Item } from "./item";
+
 export enum CharacterClass {
   Warrior = "Warrior",
   Mage = "Mage",
@@ -10,11 +12,11 @@ export interface Character {
   name: string;
   health: number;
   mana: number;
-  baseStrength: number;
-  baseAgility: number;
-  baseIntelligence: number;
-  baseFaith: number;
-  characterClass: CharacterClass;
-  items: string[];
-  createdBy: number;
+  base_strength: number;
+  base_agility: number;
+  base_intelligence: number;
+  base_faith: number;
+  character_class: CharacterClass;
+  items: Item[];
+  created_by: number;
 }

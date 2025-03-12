@@ -3,13 +3,14 @@ import {
   getAllCharacters,
   // getCharacter,
   createCharacter,
-  getCharacter,
+  getCharacterWithItems,
 } from "../controllers/characterController";
+import { verifyToken, checkGameMasterRole } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-router.get("/", getAllCharacters);
-router.get("/:id", getCharacter);
+router.get("/", verifyToken, checkGameMasterRole, getAllCharacters);
+router.get("/:id", getCharacterWithItems);
 router.post("/", createCharacter);
 
 export default router;

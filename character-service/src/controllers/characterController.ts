@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import pool from "../utils/db";
 import { Character, CharacterClass } from "../entities/character";
+import { Item } from "../entities/item";
 
 export const getAllCharacters = async (
   req: Request,
@@ -16,26 +17,98 @@ export const getAllCharacters = async (
 };
 
 const getCharacters = async () => {
-  const result = await pool.query("SELECT * FROM characters");
+  const result = await pool.query("SELECT name, health, mana FROM characters");
   return result.rows;
 };
 
-export const getCharacter = async (
+export const getCharacterWithItems = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const characterId = parseInt(req.params.id);
+
   try {
-    const result = await pool.query("SELECT * FROM characters WHERE id = $1", [
-      req.params.id,
-    ]);
+    const result = await pool.query(
+      `
+      SELECT 
+        characters.id AS character_id,
+        characters.name,
+        characters.health, 
+        characters.base_strength, 
+        characters.base_agility,
+        characters.base_intelligence,
+        characters.base_faith,
+        items.id AS item_id, 
+        items.name AS item_name, 
+        items.description AS item_description,
+        items.bonus_strength AS bonus_strength,
+        items.bonus_agility,
+        items.bonus_intelligence,
+        items.bonus_faith
+      FROM characters
+      LEFT JOIN character_items ON characters.id = character_items.character_id
+      LEFT JOIN items ON character_items.item_id = items.id
+      WHERE characters.id = $1;
+      `,
+      [characterId]
+    );
 
     if (result.rows.length === 0) {
       res.status(404).json({ message: "Character not found" });
     }
 
-    const character: Character = result.rows[0];
+    const character: Character = {
+      id: result.rows[0].character_id,
+      name: result.rows[0].name,
+      character_class: result.rows[0].character_class,
+      created_by: result.rows[0].created_by,
+      health: result.rows[0].health,
+      mana: result.rows[0].mana,
+      base_strength: result.rows[0].base_strength,
+      base_agility: result.rows[0].base_agility,
+      base_intelligence: result.rows[0].base_intelligence,
+      base_faith: result.rows[0].base_faith,
+      items: [],
+    };
 
-    res.status(200).json({ character: character });
+    let totalBonusStrength = 0;
+    let totalBonusAgility = 0;
+    let totalBonusIntelligence = 0;
+    let totalBonusFaith = 0;
+
+    // Add items to character and calculate total stats
+    result.rows.forEach((row) => {
+      const item: Item = {
+        id: row.item_id,
+        name: row.item_name,
+        description: row.item_description,
+        bonus_strength: row.bonus_strength,
+        bonus_agility: row.bonus_agility,
+        bonus_intelligence: row.bonus_intelligence,
+        bonus_faith: row.bonus_faith,
+      };
+
+      character.items.push(item);
+
+      totalBonusStrength += item.bonus_strength || 0;
+      totalBonusAgility += item.bonus_agility || 0;
+      totalBonusIntelligence += item.bonus_intelligence || 0;
+      totalBonusFaith += item.bonus_faith || 0;
+    });
+
+    const calculatedStats = {
+      strength: character.base_strength + totalBonusStrength,
+      agility: character.base_agility + totalBonusAgility,
+      intelligence: character.base_intelligence + totalBonusIntelligence,
+      faith: character.base_faith + totalBonusFaith,
+    };
+
+    res.status(200).json({
+      character: {
+        ...character,
+        total_stats: calculatedStats,
+      },
+    });
   } catch (error) {
     console.error("Error fetching character:", error);
     res.status(500).json({ message: "Server error" });
@@ -58,27 +131,27 @@ export const createCharacter = async (
     name,
     health,
     mana,
-    baseStrength,
-    baseAgility,
-    baseIntelligence,
-    baseFaith,
-    characterClass,
-    createdBy,
+    base_strength,
+    base_agility,
+    base_intelligence,
+    base_faith,
+    character_class,
+    created_by,
   }: Character = req.body;
   console.log(req.body);
 
   // Check if user in createdBy exists
-  if (!(await getUserById(createdBy))) {
+  if (!(await getUserById(created_by))) {
     res.status(404).json({ message: "User not found" });
   }
 
   // Validate character class
   if (
-    !Object.values(CharacterClass).includes(characterClass as CharacterClass)
+    !Object.values(CharacterClass).includes(character_class as CharacterClass)
   ) {
     res
       .status(400)
-      .json({ message: `Invalid character class "${characterClass}".` });
+      .json({ message: `Invalid character class "${character_class}".` });
   }
 
   // Check if char name already exists
@@ -98,12 +171,12 @@ export const createCharacter = async (
       name,
       health,
       mana,
-      baseStrength,
-      baseAgility,
-      baseIntelligence,
-      baseFaith,
-      characterClass,
-      createdBy,
+      base_strength,
+      base_agility,
+      base_intelligence,
+      base_faith,
+      character_class,
+      created_by,
     ]
   );
   res.status(201).json({
