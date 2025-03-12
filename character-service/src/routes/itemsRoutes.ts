@@ -5,9 +5,11 @@ import {
   getItemDetails,
 } from "../controllers/itemController";
 
+import { verifyToken, checkGameMasterRole } from "../middleware/authMiddleware";
+
 const router = express.Router();
 
-router.get("/", getAllItems);
+router.get("/", verifyToken, checkGameMasterRole, getAllItems);
 router.get("/:id", getItemDetails);
 router.post("/", createItem);
 
