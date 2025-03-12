@@ -96,9 +96,9 @@ export const getItemDetails = async (
       const lastStat = highestStats.pop();
       nameSuffix = ` of ${highestStats.join(", ")} and ${lastStat}`;
     }
-    
+
     const itemNameWithSuffix = `${item.name}${nameSuffix}`;
-    
+
     item.name = itemNameWithSuffix;
     console.log(item);
 
@@ -106,5 +106,65 @@ export const getItemDetails = async (
   } catch (error) {
     console.error("Error fetching item:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const assignItemToChar = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { character_id, item_id } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO character_items (character_id, item_id) VALUES ($1, $2)",
+      [character_id, item_id]
+    );
+
+    res.status(201).json({
+      message: `${item_id} assigned to ${character_id}!`,
+    });
+  } catch (error) {
+    console.error("Error assigning item to character!", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const transferItem = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { item_id, character_from_id, character_to_id } = req.body;
+
+  if (!item_id || !character_from_id || !character_to_id) {
+    res
+      .status(400)
+      .json({
+        message:
+          "Item ID, source character ID and destination character ID are required!",
+      });
+    return;
+  }
+
+  try {
+    await pool.query("BEGIN");
+
+    await pool.query(
+      "DELETE FROM character_items WHERE character_id = $1 AND item_id = $2",
+      [character_from_id, item_id]
+    );
+
+    await pool.query(
+      "INSERT INTO character_items (character_id, item_id) VALUES ($1, $2)",
+      [character_to_id, item_id]
+    );
+
+    await pool.query("COMMIT");
+
+    res.status(200).json({ message: "Item transferred successfully." });
+  } catch (error) {
+    await pool.query("ROLLBACK");
+    console.error("Error during item transfer:", error);
+    res.status(500).json({ message: "Server error during item transfer." });
   }
 };
