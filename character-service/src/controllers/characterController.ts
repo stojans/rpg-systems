@@ -3,6 +3,7 @@ import pool from "../utils/db";
 import { Character, CharacterClass } from "../entities/character";
 import { Item } from "../entities/item";
 import { ExtendedRequest } from "../middleware/authMiddleware";
+import redis from "../utils/redis";
 
 export const getAllCharacters = async (
   req: Request,
@@ -28,6 +29,14 @@ export const getCharacterWithItems = async (
   res: Response
 ): Promise<void> => {
   const characterId = parseInt(req.params.id);
+  const cacheKey = `character:${characterId}`;
+
+  const cachedCharacter = await redis.get(cacheKey);
+  if (cachedCharacter) {
+    console.log("Returning cached character data from Redis");
+    res.status(200).json(JSON.parse(cachedCharacter));
+    return;
+  }
 
   try {
     const result = await pool.query(
@@ -107,11 +116,15 @@ export const getCharacterWithItems = async (
       faith: character.base_faith + totalBonusFaith,
     };
 
+    const characterWithItems = {
+      ...character,
+      total_stats: calculatedStats,
+    };
+
+    await redis.set(cacheKey, JSON.stringify(character), "EX", 3600);
+
     res.status(200).json({
-      character: {
-        ...character,
-        total_stats: calculatedStats,
-      },
+      characterWithItems,
     });
   } catch (error) {
     console.error("Error fetching character:", error);
@@ -144,7 +157,6 @@ export const createCharacter = async (
   }: Character = req.body;
 
   const user_id = req.user?.userId;
-  console.log("REQW USER: ", user_id);
 
   // Check if user exists
   if (!user_id) {

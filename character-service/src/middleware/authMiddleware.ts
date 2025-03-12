@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import pool from "../utils/db";
-import { createDiffieHellmanGroup } from "crypto";
 
 export interface ExtendedRequest extends Request {
   user?: {
@@ -33,8 +32,6 @@ export const verifyToken = (
 
     (req as any).user = decoded;
 
-    console.log("DECODED: ", decoded);
-
     next();
   } catch (error) {
     res.status(400).json({ error: "Invalid token." });
@@ -63,7 +60,6 @@ export const checkCharacterOwnership = async (
   const userId = req.user?.userId;
   const userRole = req.user?.role;
 
-  console.log(userRole);
   if (!userId) {
     res
       .status(401)

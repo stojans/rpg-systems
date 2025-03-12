@@ -16,10 +16,12 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "ioredis": "^5.6.0",
     "jsonwebtoken": "^9.0.2",
     "node-pg-migrate": "^7.9.1",
     "nodemon": "^3.1.9",
-    "pg": "^8.13.3"
+    "pg": "^8.13.3",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

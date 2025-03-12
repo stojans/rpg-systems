@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import pool from "../utils/db";
 import { Item } from "../entities/item";
+import redis from "../utils/redis";
 
 export const getAllItems = async (
   req: Request,
@@ -162,6 +163,9 @@ export const transferItem = async (
     );
 
     await pool.query("COMMIT");
+
+    await redis.del(`character:${character_from_id}`);
+    await redis.del(`character:${character_to_id}`);
 
     res.status(200).json({ message: "Item transferred successfully." });
   } catch (error) {
