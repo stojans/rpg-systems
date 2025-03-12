@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import dotenv from "dotenv";
 import migrate from "node-pg-migrate";
 import path from "path";
+import logger from "./logger";
 
 dotenv.config();
 
@@ -9,18 +10,18 @@ const connectionString =
   process.env.DATABASE_URL ||
   "postgres://postgres:password@localhost:5432/character_service";
 
-console.log("Connecting to database with URL:", connectionString);
+logger.info(`Connecting to database with URL: ${connectionString}`);
 
 const pool = new Pool({
   connectionString,
 });
 
 pool.on("connect", () => {
-  console.log("Database connected successfully!");
+  logger.info(`Database connected!`);
 });
 
 pool.on("error", (err, client) => {
-  console.error("Error with database connection:", err);
+  logger.error(`Error with database connection: ", ${err}`);
 });
 
 const runMigrations = async () => {
@@ -31,9 +32,9 @@ const runMigrations = async () => {
       direction: "up",
     } as any);
 
-    console.log("Migrations completed successfully");
+    logger.info(`Migrations complete!`);
   } catch (error) {
-    console.error("Error running migrations:", error);
+    logger.error(`Error running migrations:", ${error}`);
     process.exit(1);
   }
 };

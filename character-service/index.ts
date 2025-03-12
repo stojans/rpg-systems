@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import characterRoutes from "./src/routes/characterRoutes";
 import itemsRoutes from "./src/routes/itemsRoutes";
 import pool from "./src/utils/db";
+import logger from "./src/utils/logger";
 
 dotenv.config();
 
@@ -16,13 +17,13 @@ const startService = async () => {
   try {
     await pool.connect();
 
+    logger.info("Server is starting...");
+
     app.listen(process.env.PORT, () => {
-      console.log(
-        `Character Service running on http://localhost:${process.env.PORT}`
-      );
+      logger.info(`Server running on port ${process.env.PORT}!`);
     });
   } catch (error) {
-    console.error("Error starting service:", error);
+    logger.error(`Error starting service: ${error}`);
     process.exit(1);
   }
 };

@@ -4,6 +4,7 @@ import { Character, CharacterClass } from "../entities/character";
 import { Item } from "../entities/item";
 import { ExtendedRequest } from "../middleware/authMiddleware";
 import redis from "../utils/redis";
+import logger from "../utils/logger";
 
 export const getAllCharacters = async (
   req: Request,
@@ -11,15 +12,18 @@ export const getAllCharacters = async (
 ): Promise<void> => {
   try {
     const characters = await getCharacters();
+    logger.info(`Characters fetched!`);
     res.status(201).json({ characters });
   } catch (error) {
-    console.error("Error during characters fetching:", error);
+    logger.error(`Error fetching character: ${error}`);
+
     res.status(500).json({ message: "Server error" });
     return;
   }
 };
 
 const getCharacters = async () => {
+  logger.info(`Fetching characters...`);
   const result = await pool.query("SELECT name, health, mana FROM characters");
   return result.rows;
 };
@@ -31,9 +35,11 @@ export const getCharacterWithItems = async (
   const characterId = parseInt(req.params.id);
   const cacheKey = `character:${characterId}`;
 
+  logger.info(`Fetching character data for ID: ${characterId}`);
+
   const cachedCharacter = await redis.get(cacheKey);
   if (cachedCharacter) {
-    console.log("Returning cached character data from Redis");
+    logger.info(`Returning character from cache:  ${characterId}`);
     res.status(200).json(JSON.parse(cachedCharacter));
     return;
   }
@@ -66,6 +72,7 @@ export const getCharacterWithItems = async (
     );
 
     if (result.rows.length === 0) {
+      logger.warn(`Character ID ${characterId} not found.`);
       res.status(404).json({ message: "Character not found" });
       return;
     }
@@ -122,12 +129,13 @@ export const getCharacterWithItems = async (
     };
 
     await redis.set(cacheKey, JSON.stringify(character), "EX", 3600);
+    logger.info(`Cached character ID: ${characterId}`);
 
     res.status(200).json({
       characterWithItems,
     });
   } catch (error) {
-    console.error("Error fetching character:", error);
+    logger.error(`Error fetching character ID ${characterId}: ${error}`);
     res.status(500).json({ message: "Server error" });
     return;
   }

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import pool from "../utils/db";
 import { Item } from "../entities/item";
 import redis from "../utils/redis";
+import logger from "../utils/logger";
 
 export const getAllItems = async (
   req: Request,
@@ -9,15 +10,17 @@ export const getAllItems = async (
 ): Promise<void> => {
   try {
     const items = await getItems();
+    logger.info(`Items fetched`);
     res.status(201).json({ items });
   } catch (error) {
-    console.error("Error during items fetching:", error);
+    logger.error(`Error fetching items: ${error}`);
     res.status(500).json({ message: "Server error" });
     return;
   }
 };
 
 export const getItems = async () => {
+  logger.info(`Fetching items...`);
   const result = await pool.query("SELECT * FROM items");
   return result.rows;
 };
@@ -26,8 +29,6 @@ export const createItem = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  console.log(req.body);
-
   const {
     bonus_strength,
     bonus_agility,
@@ -36,6 +37,8 @@ export const createItem = async (
     description,
     name,
   }: Item = req.body;
+
+  logger.info(`Creating item...`);
 
   const result = await pool.query(
     "INSERT INTO items (name, description, bonus_strength, bonus_agility, bonus_intelligence, bonus_faith) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
@@ -49,6 +52,8 @@ export const createItem = async (
     ]
   );
 
+  logger.info(`Item created!`);
+
   res.status(201).json({ message: `Item ${name} created!` });
 };
 
@@ -56,12 +61,14 @@ export const getItemDetails = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  logger.info(`Fetching item details for ID: ${req.params.id}`);
   try {
     const result = await pool.query("SELECT * FROM items WHERE id = $1", [
       req.params.id,
     ]);
 
     if (result.rows.length === 0) {
+      logger.warn(`Item not found!`);
       res.status(404).json({ message: "Item not found" });
       return;
     }
@@ -103,11 +110,12 @@ export const getItemDetails = async (
     const itemNameWithSuffix = `${item.name}${nameSuffix}`;
 
     item.name = itemNameWithSuffix;
-    console.log(item);
+
+    logger.info(`Item details fetched!`);
 
     res.status(200).json({ item: item });
   } catch (error) {
-    console.error("Error fetching item:", error);
+    logger.error(`Error fetching item details: ${error}`);
     res.status(500).json({ message: "Server error" });
     return;
   }
@@ -129,7 +137,7 @@ export const assignItemToChar = async (
       message: `${item_id} assigned to ${character_id}!`,
     });
   } catch (error) {
-    console.error("Error assigning item to character!", error);
+    logger.error(`Error asigning item: ${error}`);
     res.status(500).json({ error: "Server error" });
     return;
   }
@@ -170,7 +178,8 @@ export const transferItem = async (
     res.status(200).json({ message: "Item transferred successfully." });
   } catch (error) {
     await pool.query("ROLLBACK");
-    console.error("Error during item transfer:", error);
+    logger.error(`Error transfering items: ${error}`);
+
     res.status(500).json({ message: "Server error during item transfer." });
     return;
   }
