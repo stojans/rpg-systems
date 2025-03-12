@@ -12,8 +12,8 @@ import { verifyToken, checkGameMasterRole } from "../middleware/authMiddleware";
 const router = express.Router();
 
 router.get("/", verifyToken, checkGameMasterRole, getAllItems);
-router.get("/:id", getItemDetails);
 router.post("/", createItem);
+router.get("/:id", getItemDetails);
 router.post("/grant", assignItemToChar);
 router.post("/gift", transferItem);
 

@@ -3,8 +3,8 @@ import { Item } from "./item";
 export enum CharacterClass {
   Warrior = "Warrior",
   Mage = "Mage",
-  Archer = "Rogue",
-  Healer = "Priest",
+  Rogue = "Rogue",
+  Priest = "Priest",
 }
 
 export interface Character {

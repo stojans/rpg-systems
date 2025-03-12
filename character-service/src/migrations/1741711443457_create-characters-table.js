@@ -74,8 +74,16 @@ exports.up = (pgm) => {
       notNull: true,
     },
   });
-};
 
+  pgm.sql(`
+    INSERT INTO characters (name, health, mana, base_strength, base_agility, base_intelligence, base_faith, character_class, created_by)
+    VALUES
+    ('Character 1', 100, 80, 10, 5, 2, 4, 'Warrior', 1),
+    ('Character 2', 50, 120, 3, 3, 10, 6, 'Mage', 2),
+    ('Character 3', 70, 0, 6, 8, 2, 5, 'Rogue', 1),
+    ('Character 4', 50, 100, 1, 1, 8, 12, 'Priest', 2);
+    `);
+};
 exports.down = (pgm) => {
   pgm.dropTable("characters");
 

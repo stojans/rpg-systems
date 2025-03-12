@@ -1,4 +1,3 @@
-// <timestamp>_create_items_table.js
 exports.up = async (pgm) => {
   pgm.createTable("items", {
     id: {
