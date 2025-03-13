@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import pool from "../utils/db";
+import { createPool } from "../../../shared/db";
 import { Item } from "../entities/item";
-import redis from "../utils/redis";
-import logger from "../utils/logger";
+import redis from "../../../shared/redis";
+import logger from "../../../shared/logger";
+
+const pool = createPool("character");
 
 export const getAllItems = async (
   req: Request,

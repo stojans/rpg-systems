@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
-import pool from "../utils/db";
+import { createPool } from "../../../shared/db";
 import { Character, CharacterClass } from "../entities/character";
 import { Item } from "../entities/item";
 import { ExtendedRequest } from "../middleware/authMiddleware";
-import redis from "../utils/redis";
-import logger from "../utils/logger";
+import redis from "../../../shared/redis";
+import logger from "../../../shared/logger";
+
+const pool = createPool("character");
 
 export const getAllCharacters = async (
   req: Request,
@@ -97,11 +99,11 @@ export const getCharacterWithItems = async (
     let totalBonusFaith = 0;
 
     // Add items to character and calculate total stats
-    result.rows.forEach((row) => {
+    result.rows.forEach((row: Item) => {
       const item: Item = {
-        id: row.item_id,
-        name: row.item_name,
-        description: row.item_description,
+        id: row.id,
+        name: row.name,
+        description: row.description,
         bonus_strength: row.bonus_strength,
         bonus_agility: row.bonus_agility,
         bonus_intelligence: row.bonus_intelligence,

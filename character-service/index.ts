@@ -2,8 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import characterRoutes from "./src/routes/characterRoutes";
 import itemsRoutes from "./src/routes/itemsRoutes";
-import pool from "./src/utils/db";
-import logger from "./src/utils/logger";
+import { createPool } from "../shared/db";
+import logger from "../shared/logger";
 
 dotenv.config();
 
@@ -15,15 +15,17 @@ app.use("/api/items", itemsRoutes);
 
 const startService = async () => {
   try {
+    const pool = createPool("character");
+
     await pool.connect();
 
-    logger.info("Server is starting...");
-
-    app.listen(process.env.PORT, () => {
-      logger.info(`Server running on port ${process.env.PORT}!`);
+    app.listen(process.env.CHARACTER_PORT, () => {
+      console.log(
+        `Account Service running on http://localhost:${process.env.CHARACTER_PORT}`
+      );
     });
   } catch (error) {
-    logger.error(`Error starting service: ${error}`);
+    console.error("Error starting service:", error);
     process.exit(1);
   }
 };

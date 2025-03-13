@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "baseUrl": ".",
+    "paths": {
+      "shared/*": ["shared/src/*"]
+    },
+    "outDir": "./dist",
+    "esModuleInterop": true
+  },
+  "include": [
+    "account-service/src/**/*.ts",
+    "character-service/src/**/*.ts",
+    "combat-service/src/**/*.ts",
+    "shared/src/**/*.ts",
+    "shared/logger.ts",
+    "shared/redis.ts"
+  ]
+}

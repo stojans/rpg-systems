@@ -2,7 +2,9 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { User } from "../entities/user";
-import pool from "../utils/db";
+import { createPool } from "../../../shared/db";
+
+const pool = createPool("account");
 
 export const getAllUsers = async (
   req: Request,
@@ -68,8 +70,6 @@ export const registerUser = async (
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
-
-  console.log("LOGIN HIT");
 
   if (!username || !password) {
     res.status(400).json({ message: "Username and password are required" });
