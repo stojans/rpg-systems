@@ -36,6 +36,20 @@ const getUserIdFromToken = async (token: string) => {
   }
 };
 
+const isCharacterOwnedByUser = async (characterId: number, userId: number) => {
+  try {
+    const query = `SELECT COUNT(*) FROM foreign_characters WHERE id = $1 AND created_by = $2`;
+    const values = [characterId, userId];
+
+    const result = await pool.query(query, values);
+
+    return result.rows[0].count > 0; // Returns true if the character belongs to the user
+  } catch (error) {
+    console.error("Error checking character ownership:", error);
+    throw new Error("Failed to check character ownership");
+  }
+};
+
 const updateDuelTurn = async (duelId: number) => {
   try {
     const result = await pool.query("SELECT * FROM duels WHERE id = $1", [
@@ -73,8 +87,22 @@ export const initiateDuel = async (req: Request, res: Response) => {
   const { characterId, opponentCharacterId } = req.body;
   const token = req.headers.authorization?.split(" ")[1].trim();
 
+  const userId = await getUserIdFromToken(token);
+
   if (!token) {
     return res.status(400).json({ message: "Authorization token is required" });
+  }
+
+  const isMyCharacter = await isCharacterOwnedByUser(characterId, userId);
+
+  if (!isMyCharacter) {
+    return res
+      .status(400)
+      .json({ message: "Initiating character must be created by you!" });
+  }
+
+  if (characterId === opponentCharacterId) {
+    return res.status(400).json({ message: "Character can't attack itself!" });
   }
 
   try {
