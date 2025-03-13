@@ -1,0 +1,24 @@
+{
+  "name": "rpg-systems",
+  "private": true,
+  "workspaces": [
+    "account-service",
+    "character-service",
+    "combat-service",
+    "shared"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "dev": "ts-node index.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.0.0",
+    "typescript": "^4.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import pool from "../utils/db";
+import { createPool } from "../../../shared/db";
 
 export interface ExtendedRequest extends Request {
   user?: {
@@ -8,9 +8,15 @@ export interface ExtendedRequest extends Request {
     username: string;
     role: string;
   };
+  body: any;
+  params: {
+    id?: string;
+  };
+  header: any;
 }
 
-const secretKey = process.env.JWT_SECRET || "your_secret_key";
+const secretKey = process.env.JWT_SECRET;
+const pool = createPool("character");
 
 export const verifyToken = (
   req: ExtendedRequest,
