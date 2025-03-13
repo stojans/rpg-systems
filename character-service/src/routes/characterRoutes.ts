@@ -9,7 +9,7 @@ import {
   verifyToken,
   checkGameMasterRole,
   checkCharacterOwnership,
-} from "../middleware/authMiddleware";
+} from "../../../shared/authMiddleware";
 
 const router = express.Router();
 

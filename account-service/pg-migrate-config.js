@@ -1,5 +1,3 @@
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
 module.exports = {
   databaseUrl:
     process.env.DATABASE_URL ||

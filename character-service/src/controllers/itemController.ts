@@ -54,7 +54,7 @@ export const createItem = async (
     ]
   );
 
-  logger.info(`Item created!`);
+  logger.info(`Item "${name}" created!`);
 
   res.status(201).json({ message: `Item ${name} created!` });
 };
@@ -63,14 +63,14 @@ export const getItemDetails = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  logger.info(`Fetching item details for ID: ${req.params.id}`);
+  logger.info(`Fetching item details for ID: ${req.params.id}...`);
   try {
     const result = await pool.query("SELECT * FROM items WHERE id = $1", [
       req.params.id,
     ]);
 
     if (result.rows.length === 0) {
-      logger.warn(`Item not found!`);
+      logger.error(`Item with ID ${req.params.id} not found!`);
       res.status(404).json({ message: "Item not found" });
       return;
     }
@@ -134,12 +134,15 @@ export const assignItemToChar = async (
       "INSERT INTO character_items (character_id, item_id) VALUES ($1, $2)",
       [character_id, item_id]
     );
+    logger.info(
+      `Item with ID ${item_id} assigned to character with ID ${character_id}!`
+    );
 
     res.status(201).json({
-      message: `${item_id} assigned to ${character_id}!`,
+      message: `Item with ID ${item_id} assigned to character with ID ${character_id}!`,
     });
   } catch (error) {
-    logger.error(`Error asigning item: ${error}`);
+    logger.error(`Error asigning item: ${error.message}`);
     res.status(500).json({ error: "Server error" });
     return;
   }
@@ -152,6 +155,9 @@ export const transferItem = async (
   const { item_id, character_from_id, character_to_id } = req.body;
 
   if (!item_id || !character_from_id || !character_to_id) {
+    logger.error(
+      `Item ID, source character ID and destination character ID are required!`
+    );
     res.status(400).json({
       message:
         "Item ID, source character ID and destination character ID are required!",
@@ -175,12 +181,18 @@ export const transferItem = async (
     await pool.query("COMMIT");
 
     await redis.del(`character:${character_from_id}`);
+    logger.info(`Removed character with ID ${character_from_id} from cache!`);
     await redis.del(`character:${character_to_id}`);
+    logger.info(`Removed character with ID ${character_to_id} from cache!`);
+
+    logger.info(
+      `Item with ID ${item_id} transferred from character with ID ${character_from_id} to character with ID ${character_to_id}`
+    );
 
     res.status(200).json({ message: "Item transferred successfully." });
   } catch (error) {
     await pool.query("ROLLBACK");
-    logger.error(`Error transfering items: ${error}`);
+    logger.error(`Error transfering items: ${error.message}`);
 
     res.status(500).json({ message: "Server error during item transfer." });
     return;
