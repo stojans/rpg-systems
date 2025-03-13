@@ -15,6 +15,7 @@
     "combat-service/src/**/*.ts",
     "shared/src/**/*.ts",
     "shared/logger.ts",
-    "shared/redis.ts"
+    "shared/redis.ts",
+    "shared/authMiddleware.ts"
   ]
 }

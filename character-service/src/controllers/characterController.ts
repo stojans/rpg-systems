@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { createPool } from "../../../shared/db";
 import { Character, CharacterClass } from "../entities/character";
 import { Item } from "../entities/item";
-import { ExtendedRequest } from "../middleware/authMiddleware";
+import { ExtendedRequest } from "../../../shared/authMiddleware";
 import redis from "../../../shared/redis";
 import logger from "../../../shared/logger";
 
@@ -97,8 +97,6 @@ export const getCharacterWithItems = async (
     let totalBonusAgility = 0;
     let totalBonusIntelligence = 0;
     let totalBonusFaith = 0;
-
-    console.log("ASASDASD", result.rows);
 
     // Loop over all rows and add items to the character
     result.rows.forEach((row: any) => {

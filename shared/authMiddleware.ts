@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { createPool } from "../../../shared/db";
+import { createPool } from "./db";
 
 export interface ExtendedRequest extends Request {
   user?: {
@@ -12,7 +12,10 @@ export interface ExtendedRequest extends Request {
   params: {
     id?: string;
   };
-  header: any;
+  headers: {
+    "x-combat-request"?: string;
+    [key: string]: any;
+  };
 }
 
 const secretKey = process.env.JWT_SECRET;
@@ -23,7 +26,9 @@ export const verifyToken = (
   res: Response,
   next: NextFunction
 ): void => {
-  const token = req.header("Authorization")?.split(" ")[1];
+  const token = req.headers["authorization"]?.split(" ")[1]?.trim();
+
+  console.log("JWT SECRET:", process.env.JWT_SECRET);
 
   if (!token) {
     res.status(401).json({ error: "Access denied. No token provided." });
@@ -71,6 +76,10 @@ export const checkCharacterOwnership = async (
       .status(401)
       .json({ message: "Unauthorized. No user ID found in token." });
     return;
+  }
+
+  if (req.headers["x-combat-request"] === "true") {
+    return next();
   }
 
   try {

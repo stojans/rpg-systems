@@ -7,7 +7,10 @@ import {
   transferItem,
 } from "../controllers/itemController";
 
-import { verifyToken, checkGameMasterRole } from "../middleware/authMiddleware";
+import {
+  verifyToken,
+  checkGameMasterRole,
+} from "../../../shared/authMiddleware";
 
 const router = express.Router();
 
