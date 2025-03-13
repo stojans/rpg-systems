@@ -21,7 +21,7 @@ const startService = async () => {
 
     app.listen(process.env.CHARACTER_PORT, () => {
       console.log(
-        `Account Service running on http://localhost:${process.env.CHARACTER_PORT}`
+        `Character Service running on http://localhost:${process.env.CHARACTER_PORT}`
       );
     });
   } catch (error) {

@@ -98,26 +98,34 @@ export const getCharacterWithItems = async (
     let totalBonusIntelligence = 0;
     let totalBonusFaith = 0;
 
-    // Add items to character and calculate total stats
-    result.rows.forEach((row: Item) => {
+    console.log("ASASDASD", result.rows);
+
+    // Loop over all rows and add items to the character
+    result.rows.forEach((row: any) => {
+      if (row.item_id === null) {
+        return;
+      }
       const item: Item = {
-        id: row.id,
-        name: row.name,
-        description: row.description,
+        id: row.item_id,
+        name: row.item_name,
+        description: row.item_description,
         bonus_strength: row.bonus_strength,
         bonus_agility: row.bonus_agility,
         bonus_intelligence: row.bonus_intelligence,
         bonus_faith: row.bonus_faith,
       };
 
+      // Add the item to the character's items array
       character.items.push(item);
 
+      // Calculate total bonus stats from all items
       totalBonusStrength += item.bonus_strength || 0;
       totalBonusAgility += item.bonus_agility || 0;
       totalBonusIntelligence += item.bonus_intelligence || 0;
       totalBonusFaith += item.bonus_faith || 0;
     });
 
+    // Calculate total stats with bonuses
     const calculatedStats = {
       strength: character.base_strength + totalBonusStrength,
       agility: character.base_agility + totalBonusAgility,
@@ -130,7 +138,7 @@ export const getCharacterWithItems = async (
       total_stats: calculatedStats,
     };
 
-    await redis.set(cacheKey, JSON.stringify(character), "EX", 3600);
+    await redis.set(cacheKey, JSON.stringify(characterWithItems), "EX", 3600);
     logger.info(`Cached character ID: ${characterId}`);
 
     res.status(200).json({
