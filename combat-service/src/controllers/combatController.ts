@@ -21,6 +21,46 @@ const getCharacterDetails = async (characterId: number, token: string) => {
   }
 };
 
+const transferItemToWinner = async (
+  winnerId: number,
+  loser: any,
+  token: string
+) => {
+  const items = loser.items;
+  let randomItemId: number | null = null;
+
+  if (items.length > 0) {
+    const randomItem = items[Math.floor(Math.random() * items.length)];
+    randomItemId = randomItem.id;
+  } else {
+    console.log("No items available.");
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      `http://localhost:3002/api/items/gift/`,
+      {
+        item_id: randomItemId,
+        character_from_id: loser.id,
+        character_to_id: winnerId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Transfer Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error fetching character details: " + error.message);
+  }
+};
+
 // Duel session logic
 export const performAction = async (
   req: Request,
@@ -34,7 +74,7 @@ export const performAction = async (
 
   const userId = await getUserIdFromToken(token);
   const duel = await dbHelpers.getDuelById(duelId);
-  if (!duel)
+  if (!duel || duel.status === "ended")
     return res.status(400).json({ message: "Duel not found or already ended" });
 
   try {
@@ -61,8 +101,9 @@ export const performAction = async (
           : duel.character_1_id
         : characterDetails.id;
 
-    // let targetDetails = await getCharacterDetails(targetId, token);
     let targetHealth = await dbHelpers.getCharacterHealth(targetId);
+
+    const target = await getCharacterDetails(targetId, token);
 
     let amount: number;
 
@@ -95,11 +136,11 @@ export const performAction = async (
         duel,
         newHealth
       );
-      if (duelEnded)
-        return res.status(200).json({
-          message: "Attack successful. Duel ended!",
-          winner: duel.winner_id,
-        });
+      if (duelEnded) transferItemToWinner(characterDetails.id, target, token);
+      return res.status(200).json({
+        message: "Attack successful. Duel ended!",
+        winner: duel.winner_id,
+      });
     }
 
     await dbHelpers.updateDuelTurn(duelId);

@@ -15,9 +15,9 @@ import {
 const router = express.Router();
 
 router.get("/", verifyToken, checkGameMasterRole, getAllItems);
-router.post("/", createItem);
-router.get("/:id", getItemDetails);
-router.post("/grant", assignItemToChar);
-router.post("/gift", transferItem);
+router.post("/", verifyToken, createItem);
+router.get("/:id", verifyToken, getItemDetails);
+router.post("/grant", verifyToken, assignItemToChar);
+router.post("/gift", verifyToken, transferItem);
 
 export default router;

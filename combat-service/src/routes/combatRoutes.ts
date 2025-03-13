@@ -7,8 +7,14 @@ const router = express.Router();
 
 router.post("/challenge", verifyToken, initiateDuel);
 
-router.post("/:duelId/attack", (req, res) => performAction(req, res, "attack"));
-router.post("/:duelId/heal", (req, res) => performAction(req, res, "heal"));
-router.post("/:duelId/cast", (req, res) => performAction(req, res, "cast"));
+router.post("/:duelId/attack", verifyToken, (req, res) =>
+  performAction(req, res, "attack")
+);
+router.post("/:duelId/heal", verifyToken, (req, res) =>
+  performAction(req, res, "heal")
+);
+router.post("/:duelId/cast", verifyToken, (req, res) =>
+  performAction(req, res, "cast")
+);
 
 export default router;
