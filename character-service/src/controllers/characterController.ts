@@ -41,7 +41,7 @@ export const getCharacterWithItems = async (
 
   const cachedCharacter = await redis.get(cacheKey);
   if (cachedCharacter) {
-    logger.info(`Returning character from cache:  ${characterId}`);
+    logger.info(`Returning character from cache: ${characterId}`);
     res.status(200).json(JSON.parse(cachedCharacter));
     return;
   }
@@ -74,7 +74,7 @@ export const getCharacterWithItems = async (
     );
 
     if (result.rows.length === 0) {
-      logger.warn(`Character ID ${characterId} not found.`);
+      logger.error(`Character ID ${characterId} not found!`);
       res.status(404).json({ message: "Character not found" });
       return;
     }
@@ -176,11 +176,13 @@ export const createCharacter = async (
 
   // Check if user exists
   if (!user_id) {
+    logger.error(`User ID ${user_id} not found!`);
     res.status(401).json({ message: "Unauthorized, user not found." });
     return;
   }
 
   if (!(await getUserById(user_id))) {
+    logger.error(`User with ID ${user_id} not found!`);
     res.status(404).json({ message: "User not found" });
     return;
   }
@@ -189,6 +191,7 @@ export const createCharacter = async (
   if (
     !Object.values(CharacterClass).includes(character_class as CharacterClass)
   ) {
+    logger.error(`Invalid Character class!`);
     res
       .status(400)
       .json({ message: `Invalid character class "${character_class}".` });
@@ -201,6 +204,7 @@ export const createCharacter = async (
     [req.body.name]
   );
   if (nameCheck && nameCheck.rowCount && nameCheck.rowCount > 0) {
+    logger.error(`Character named "${req.body.name}" already exists!`);
     res
       .status(400)
       .json({ message: `Character name "${req.body.name}" already exists.` });
@@ -221,6 +225,8 @@ export const createCharacter = async (
       user_id,
     ]
   );
+  logger.info(`Character named "${req.body.name}" created!`);
+
   res.status(201).json({
     message: `Character ${req.body.name} created!`,
     character: result.rows[0],

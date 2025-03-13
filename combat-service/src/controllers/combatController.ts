@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { getUserIdFromToken } from "../helpers/authHelpers";
 import * as dbHelpers from "../helpers/dbHelpers";
+import logger from "../../../shared/logger";
 
 const getCharacterDetails = async (characterId: number, token: string) => {
   try {
@@ -14,9 +15,11 @@ const getCharacterDetails = async (characterId: number, token: string) => {
         },
       }
     );
+    logger.info(`Fetched character with ID ${characterId}!`);
+
     return response.data;
   } catch (error) {
-    console.log(error);
+    logger.error(`Error fetching character details: ${error.message}`);
     throw new Error("Error fetching character details: " + error.message);
   }
 };
@@ -33,7 +36,7 @@ const transferItemToWinner = async (
     const randomItem = items[Math.floor(Math.random() * items.length)];
     randomItemId = randomItem.id;
   } else {
-    console.log("No items available.");
+    logger.info(`No items available for transfer`);
     return;
   }
 
@@ -53,11 +56,13 @@ const transferItemToWinner = async (
       }
     );
 
-    console.log("Transfer Response:", response.data);
+    logger.info(`${response.data}`);
+
     return response.data;
   } catch (error) {
-    console.log(error);
-    throw new Error("Error fetching character details: " + error.message);
+    logger.error(`Error transfering items: ${error.message}`);
+
+    throw new Error("Error transfering items: " + error.message);
   }
 };
 
@@ -69,13 +74,19 @@ export const performAction = async (
 ) => {
   const duelId = parseInt(req.params.duelId);
   const token = req.headers.authorization?.split(" ")[1]?.trim();
-  if (!token)
+  if (!token) {
+    logger.error(`No Auth token!`);
+
     return res.status(400).json({ message: "Authorization token is required" });
+  }
 
   const userId = await getUserIdFromToken(token);
   const duel = await dbHelpers.getDuelById(duelId);
-  if (!duel || duel.status === "ended")
+  if (!duel || duel.status === "ended") {
+    logger.error(`Duel with ID ${duelId} not found or already ended!`);
+
     return res.status(400).json({ message: "Duel not found or already ended" });
+  }
 
   try {
     const characterDetails = await getCharacterDetails(
@@ -88,6 +99,7 @@ export const performAction = async (
       duel
     );
     if (!isMyCharacter) {
+      logger.error(`Not this character's turn, can't ${action}!`);
       return res.status(403).json({
         message: `You do not have permission to ${action}. It's not your character's turn.`,
         next_turn_char_id: duel.current_turn_character_id,
@@ -136,14 +148,21 @@ export const performAction = async (
         duel,
         newHealth
       );
-      if (duelEnded) transferItemToWinner(characterDetails.id, target, token);
-      return res.status(200).json({
-        message: "Attack successful. Duel ended!",
-        winner: duel.winner_id,
-      });
+      if (duelEnded) {
+        transferItemToWinner(characterDetails.id, target, token);
+        logger.info(
+          `Character with ID ${characterDetails.id} wins duel with ID ${duelId}!`
+        );
+
+        return res.status(200).json({
+          message: "Attack successful. Duel ended!",
+          winner: duel.winner_id,
+        });
+      }
     }
 
     await dbHelpers.updateDuelTurn(duelId);
+    logger.info(`${action} successful, ending turn!`);
     res.status(200).json({
       message: `${
         action.charAt(0).toUpperCase() + action.slice(1)
@@ -151,9 +170,9 @@ export const performAction = async (
       remaining_health: newHealth,
       currentTurn: duel.current_turn_character_id,
     });
-
-    console.log("TARGET ID:", newHealth);
   } catch (error) {
+    logger.error(`Error performing ${action}: ${error.message}`);
+
     res
       .status(500)
       .json({ message: `Error performing ${action}`, error: error.message });

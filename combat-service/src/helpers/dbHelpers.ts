@@ -1,6 +1,7 @@
 import { createPool } from "../../../shared/db";
 import { Request, Response } from "express";
 import { getUserIdFromToken } from "./authHelpers";
+import logger from "shared/logger";
 
 const pool = createPool("combat");
 
@@ -18,18 +19,21 @@ export const initiateDuel = async (req: Request, res: Response) => {
   const userId = await getUserIdFromToken(token);
 
   if (!token) {
+    logger.error(`No Auth token!`);
     return res.status(400).json({ message: "Authorization token is required" });
   }
 
   const isMyCharacter = await isCharacterOwnedByUser(characterId, userId);
 
   if (!isMyCharacter) {
+    logger.error(`Character ${characterId} not owned by user ${userId}!`);
     return res
       .status(400)
       .json({ message: "Initiating character must be created by you!" });
   }
 
   if (characterId === opponentCharacterId) {
+    logger.error(`Character can't attack itself!`);
     return res.status(400).json({ message: "Character can't attack itself!" });
   }
 
@@ -46,17 +50,19 @@ export const initiateDuel = async (req: Request, res: Response) => {
 
     const result = await pool.query(
       `INSERT INTO duels (character_1_id, character_2_id, current_turn_character_id) 
-         VALUES ($1, $2, $3) RETURNING id`,
+      VALUES ($1, $2, $3) RETURNING id`,
       [characterId, opponentCharacterId, characterId]
     );
 
     const duelId = result.rows[0].id;
 
+    logger.info(`Initiated Duel ${duelId}!`);
     res.status(200).json({
       message: `Duel ${duelId} initiated successfully`,
       duel: duel,
     });
   } catch (error) {
+    logger.error(`Duel inititiation failed: ${error.message}!`);
     res
       .status(500)
       .json({ message: "Error initiating duel", error: error.message });
@@ -69,6 +75,7 @@ export const updateDuelTurn = async (duelId: number) => {
       duelId,
     ]);
     if (result.rows.length === 0) {
+      logger.error(`Duel not found: ID ${duelId}!`);
       throw new Error("Duel not found");
     }
 
@@ -87,10 +94,9 @@ export const updateDuelTurn = async (duelId: number) => {
       [nextTurn, nextCharacterTurn, duelId]
     );
 
-    console.log(
-      `Duel ${duelId} updated to turn ${nextTurn} with character ${nextCharacterTurn}'s turn.`
-    );
+    logger.info(`Turn ${nextTurn}!`);
   } catch (error) {
+    logger.error(`Failed updating duel: ${error.message}`);
     console.error("Error updating duel:", error.message);
   }
 };
@@ -142,7 +148,7 @@ export const isCharacterOwnedByUser = async (
 
     return result.rows[0].count > 0; // Returns true if the character belongs to the user
   } catch (error) {
-    console.error("Error checking character ownership:", error);
+    logger.error(`Error checking character ownership: ${error.message}`);
     throw new Error("Failed to check character ownership");
   }
 };
@@ -164,9 +170,8 @@ export const updateCharacterHealth = async (
     const values = [newHealth, userId];
 
     await pool.query(query, values);
-
-    console.log(`Updated health to ${newHealth} for character ID ${userId}`);
+    logger.info(`Updated health to ${newHealth} for character ID ${userId}`);
   } catch (error) {
-    console.error("Error updating health:", error);
+    logger.error(`Error updating health: ${error.message}`);
   }
 };
