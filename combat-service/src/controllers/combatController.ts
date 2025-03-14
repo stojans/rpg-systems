@@ -7,7 +7,7 @@ import logger from "../../../shared/logger";
 const getCharacterDetails = async (characterId: number, token: string) => {
   try {
     const response = await axios.get(
-      `http://localhost:3002/api/character/${characterId}`,
+      `http://character-service:3002/api/character/${characterId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -42,7 +42,7 @@ const transferItemToWinner = async (
 
   try {
     const response = await axios.post(
-      `http://localhost:3002/api/items/gift/`,
+      `http://character-service:3002/api/items/gift/`,
       {
         item_id: randomItemId,
         character_from_id: loser.id,
