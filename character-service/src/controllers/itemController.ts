@@ -23,8 +23,15 @@ export const getAllItems = async (
 
 export const getItems = async () => {
   logger.info(`Fetching items...\n`);
-  const result = await pool.query("SELECT * FROM items");
-  return result.rows;
+  const items = await pool.query("SELECT * FROM items");
+  let itemsWithSuffixes = [];
+
+  items.rows.forEach((item) => {
+    determineItemSuffix(item);
+    itemsWithSuffixes.push(item);
+  });
+
+  return itemsWithSuffixes;
 };
 
 export const createItem = async (
@@ -59,6 +66,43 @@ export const createItem = async (
   res.status(201).json({ message: `Item ${name} created!` });
 };
 
+const determineItemSuffix = (item: Item) => {
+  let nameSuffix = "";
+
+  const stats = [
+    { stat: "Strength", value: item.bonus_strength },
+    { stat: "Agility", value: item.bonus_agility },
+    { stat: "Intelligence", value: item.bonus_intelligence },
+    { stat: "Faith", value: item.bonus_faith },
+  ];
+
+  const highestStats = stats
+    .filter(
+      (stat) =>
+        stat.value ===
+        Math.max(
+          item.bonus_strength,
+          item.bonus_agility,
+          item.bonus_intelligence,
+          item.bonus_faith
+        )
+    )
+    .map((stat) => stat.stat);
+
+  if (highestStats.length === 1) {
+    nameSuffix = ` of ${highestStats[0]}`;
+  } else if (highestStats.length === 2) {
+    nameSuffix = ` of ${highestStats.join(" and ")}`;
+  } else if (highestStats.length > 2) {
+    const lastStat = highestStats.pop();
+    nameSuffix = ` of ${highestStats.join(", ")} and ${lastStat}`;
+  }
+
+  const itemNameWithSuffix = `${item.name}${nameSuffix}`;
+
+  item.name = itemNameWithSuffix;
+};
+
 export const getItemDetails = async (
   req: Request,
   res: Response
@@ -77,41 +121,9 @@ export const getItemDetails = async (
 
     const item = result.rows[0];
 
-    // Determine item name suffix
-    let nameSuffix = "";
+    determineItemSuffix(item);
 
-    const stats = [
-      { stat: "Strength", value: item.bonus_strength },
-      { stat: "Agility", value: item.bonus_agility },
-      { stat: "Intelligence", value: item.bonus_intelligence },
-      { stat: "Faith", value: item.bonus_faith },
-    ];
-
-    const highestStats = stats
-      .filter(
-        (stat) =>
-          stat.value ===
-          Math.max(
-            item.bonus_strength,
-            item.bonus_agility,
-            item.bonus_intelligence,
-            item.bonus_faith
-          )
-      )
-      .map((stat) => stat.stat);
-
-    if (highestStats.length === 1) {
-      nameSuffix = ` of ${highestStats[0]}`;
-    } else if (highestStats.length === 2) {
-      nameSuffix = ` of ${highestStats.join(" and ")}`;
-    } else if (highestStats.length > 2) {
-      const lastStat = highestStats.pop();
-      nameSuffix = ` of ${highestStats.join(", ")} and ${lastStat}`;
-    }
-
-    const itemNameWithSuffix = `${item.name}${nameSuffix}`;
-
-    item.name = itemNameWithSuffix;
+    console.log(item);
 
     logger.info(`Item details fetched!\n`);
 
