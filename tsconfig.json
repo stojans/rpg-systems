@@ -4,16 +4,12 @@
     "module": "commonjs",
     "baseUrl": ".",
     "paths": {
-      "shared/*": ["shared/src/*"]
+      "shared/*": ["shared/*"]
     },
+    "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true
   },
-  "include": [
-    "account-service/src/**/*.ts",
-    "shared/src/**/*.ts",
-    "shared/logger.ts",
-    "shared/redis.ts",
-    "shared/authMiddleware.ts"
-  ]
+  "include": ["account-service/**/*.ts", "shared/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

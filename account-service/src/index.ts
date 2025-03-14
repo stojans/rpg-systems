@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
-import authRoutes from "./src/routes/authRoutes";
-import { createPool } from "../shared/db";
+import authRoutes from "./routes/authRoutes";
+import { createPool } from "../../shared/db";
 dotenv.config();
 
 const app = express();
