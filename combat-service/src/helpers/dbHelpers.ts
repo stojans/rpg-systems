@@ -59,7 +59,7 @@ export const initiateDuel = async (req: Request, res: Response) => {
     logger.info(`Initiated Duel ${duelId}!`);
     res.status(200).json({
       message: `Duel ${duelId} initiated successfully`,
-      duel: duel,
+      duelId: duelId,
     });
   } catch (error) {
     logger.error(`Duel inititiation failed: ${error.message}!`);
@@ -125,15 +125,7 @@ export const isUserCharacterTurn = async (
   userId: number,
   duel
 ) => {
-  const ownerResult = await pool.query(
-    `SELECT created_by FROM foreign_characters WHERE id = $1`,
-    [characterId]
-  );
-  return (
-    ownerResult.rows.length > 0 &&
-    ownerResult.rows[0].created_by === userId &&
-    characterId === duel.current_turn_character_id
-  );
+  return characterId === duel.current_turn_character_id;
 };
 
 export const isCharacterOwnedByUser = async (
@@ -162,15 +154,15 @@ export const getCharacterHealth = async (characterId: number) => {
 };
 
 export const updateCharacterHealth = async (
-  userId: number,
+  targetId: number,
   newHealth: number
 ) => {
   try {
     const query = `UPDATE foreign_characters SET health = $1 WHERE id = $2`;
-    const values = [newHealth, userId];
+    const values = [newHealth, targetId];
 
     await pool.query(query, values);
-    logger.info(`Updated health to ${newHealth} for character ID ${userId}`);
+    logger.info(`Updated health to ${newHealth} for character ID ${targetId}`);
   } catch (error) {
     logger.error(`Error updating health: ${error.message}`);
   }

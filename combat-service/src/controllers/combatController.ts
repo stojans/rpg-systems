@@ -17,7 +17,7 @@ const getCharacterDetails = async (characterId: number, token: string) => {
     );
     logger.info(`Fetched character with ID ${characterId}!`);
 
-    return response.data;
+    return response.data.characterWithItems;
   } catch (error) {
     logger.error(`Error fetching character details: ${error.message}`);
     throw new Error("Error fetching character details: " + error.message);
@@ -32,7 +32,7 @@ const transferItemToWinner = async (
   const items = loser.items;
   let randomItemId: number | null = null;
 
-  if (items.length > 0) {
+  if (items && items.length > 0) {
     const randomItem = items[Math.floor(Math.random() * items.length)];
     randomItemId = randomItem.id;
   } else {
@@ -93,13 +93,16 @@ export const performAction = async (
       duel.current_turn_character_id,
       token
     );
+
     const isMyCharacter = await dbHelpers.isUserCharacterTurn(
       characterDetails.id,
       userId,
       duel
     );
     if (!isMyCharacter) {
-      logger.error(`Not this character's turn, can't ${action}!`);
+      logger.error(
+        `Not this character's (ID ${characterDetails.id}) turn, can't ${action}!`
+      );
       return res.status(403).json({
         message: `You do not have permission to ${action}. It's not your character's turn.`,
         next_turn_char_id: duel.current_turn_character_id,
@@ -156,17 +159,18 @@ export const performAction = async (
 
         return res.status(200).json({
           message: "Attack successful. Duel ended!",
-          winner: duel.winner_id,
+          winnerId: duel.winner_id,
+          winnerName: characterDetails.name,
         });
       }
     }
 
     await dbHelpers.updateDuelTurn(duelId);
-    logger.info(`${action} successful, ending turn!`);
+    logger.info(`${action} successful, ending turn ${duel.turn}!`);
     res.status(200).json({
       message: `${
         action.charAt(0).toUpperCase() + action.slice(1)
-      } successful. Turn ended.`,
+      } successful. Turn ${duel.turn} ended.`,
       remaining_health: newHealth,
       currentTurn: duel.current_turn_character_id,
     });
