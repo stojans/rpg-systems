@@ -1,0 +1,98 @@
+services:
+  # Account Service
+  account-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: account-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: account_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      ACCOUNT_PORT: 3001
+      ACCOUNT_DB_URL: postgres://postgres:password@postgres:5432/account_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3001:3001"
+
+  character-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: character-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: character_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      CHARACTER_PORT: 3002
+      CHARACTER_DB_URL: postgres://postgres:password@postgres:5432/character_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3002:3002"
+
+  combat-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: combat-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: combat_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      COMBAT_PORT: 3003
+      COMBAT_DB_URL: postgres://postgres:password@postgres:5432/combat_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3003:3003"
+
+  # Postgres database service (example)
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      # POSTGRES_DB: account_service
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # Mount the init script
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  # Redis (for caching purposes)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: rpg_network

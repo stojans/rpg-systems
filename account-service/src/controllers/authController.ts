@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { User } from "../entities/user";
 import { createPool } from "../../../shared/db";
-import logger from "shared/logger";
+import logger from "../../../shared/logger";
 
 const pool = createPool("account");
 

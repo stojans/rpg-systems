@@ -1,9 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-import combatRoutes from "./src/routes/combatRoutes";
-// import itemsRoutes from "./src/routes/itemsRoutes";
-import { createPool } from "../shared/db";
-import logger from "../shared/logger";
+import combatRoutes from "./routes/combatRoutes";
+import { createPool } from "../../shared/db";
+import logger from "../../shared/logger";
 
 dotenv.config();
 

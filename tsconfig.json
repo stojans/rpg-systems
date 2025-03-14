@@ -4,18 +4,17 @@
     "module": "commonjs",
     "baseUrl": ".",
     "paths": {
-      "shared/*": ["shared/src/*"]
+      "shared/*": ["shared/*"]
     },
+    "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true
   },
   "include": [
-    "account-service/src/**/*.ts",
-    "character-service/src/**/*.ts",
-    "combat-service/src/**/*.ts",
-    "shared/src/**/*.ts",
-    "shared/logger.ts",
-    "shared/redis.ts",
-    "shared/authMiddleware.ts"
-  ]
+    "account-service/**/*.ts",
+    "character-service/**/*.ts",
+    "combat-service/**/*.ts",
+    "shared/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }

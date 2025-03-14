@@ -1,9 +1,11 @@
 import { createPool } from "../../../shared/db";
 import { Request, Response } from "express";
 import { getUserIdFromToken } from "./authHelpers";
-import logger from "shared/logger";
+import logger from "../../../shared/logger";
 
 const pool = createPool("combat");
+
+const DUEL_TIME_LIMIT = 5 * 60 * 1000;
 
 export const getDuelById = async (duelId: number) => {
   const result = await pool.query(`SELECT * FROM duels WHERE id = $1`, [
@@ -42,7 +44,7 @@ export const initiateDuel = async (req: Request, res: Response) => {
       characterId,
       opponentCharacterId,
       current_turn_character_id: characterId,
-      turn: 1,
+      turn: 0,
       start_time: new Date(),
       status: "ongoing",
       winner_id: null,
@@ -56,7 +58,7 @@ export const initiateDuel = async (req: Request, res: Response) => {
 
     const duelId = result.rows[0].id;
 
-    logger.info(`Initiated Duel ${duelId}!`);
+    logger.info(`Initiated Duel ${duelId}!\n\n`);
     res.status(200).json({
       message: `Duel ${duelId} initiated successfully`,
       duelId: duelId,
@@ -66,6 +68,46 @@ export const initiateDuel = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: "Error initiating duel", error: error.message });
+  }
+};
+
+export const storeAction = async (
+  duel,
+  characterDetails,
+  target,
+  targetHealth,
+  action,
+  amount
+) => {
+  try {
+    const query = `
+      INSERT INTO duel_actions 
+        (duel_id, turn, actor_id, actor_name, 
+         action, amount, target_id, target_name, resulting_target_health, timestamp) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) 
+      RETURNING *;
+    `;
+
+    const values = [
+      duel.id,
+      duel.turn,
+      characterDetails.id,
+      characterDetails.name,
+      action,
+      amount,
+      target.id,
+      target.name,
+      targetHealth,
+    ];
+
+    const result = await pool.query(query, values);
+
+    logger.info(`Action stored`);
+
+    return result.rows[0];
+  } catch (error) {
+    logger.error(`Error storing action: ${error.message}`);
+    throw new Error("Could not store action");
   }
 };
 
@@ -94,14 +136,72 @@ export const updateDuelTurn = async (duelId: number) => {
       [nextTurn, nextCharacterTurn, duelId]
     );
 
-    logger.info(`Turn ${nextTurn}!`);
+    logger.info(`Turn ${duel.turn}!`);
   } catch (error) {
     logger.error(`Failed updating duel: ${error.message}`);
     console.error("Error updating duel:", error.message);
   }
 };
 
-export const endDuelIfNecessary = async (
+export const hasFiveMinutesPassed = async (
+  duelId: number
+): Promise<boolean> => {
+  try {
+    const result = await pool.query(
+      `SELECT turn, timestamp 
+        FROM duel_actions 
+        WHERE duel_id = $1 AND turn = 1
+        `,
+      [duelId]
+    );
+
+    if (result.rows.length === 0) {
+      logger.error(`No duel actions found for duel_id: ${duelId}`);
+      return false;
+    }
+
+    const firstTurn = result.rows[0];
+    const firstTurnTimestamp = new Date(firstTurn.timestamp);
+
+    const currentTurnTimestamp = new Date();
+
+    const timeDifference =
+      currentTurnTimestamp.getTime() - firstTurnTimestamp.getTime();
+
+    // Check if 5 minutes have passed
+    if (timeDifference > DUEL_TIME_LIMIT) {
+      logger.warn(`Time up for duel ${duelId} - it's a DRAW`);
+      let duelEndTime = new Date(
+        firstTurnTimestamp.getTime() + DUEL_TIME_LIMIT
+      );
+      await endDuelIfTimeUp(duelId, duelEndTime);
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    logger.error(
+      `Error checking time difference for duel_id: ${duelId} - ${error.message}`
+    );
+    throw new Error(`Error checking time difference: ${error.message}`);
+  }
+};
+
+export const endDuelIfTimeUp = async (duelId, duelEndTime) => {
+  await pool.query(
+    `UPDATE duels SET status = $1, winner_id = $2, end_time = $3 WHERE id = $4`,
+    ["draw", null, duelEndTime, duelId]
+  );
+  const formattedEndTime = duelEndTime
+    .toISOString()
+    .replace("T", " ")
+    .split(".")[0];
+
+  logger.info(`Duel ${duelId} ended as a draw at ${formattedEndTime}`);
+  return;
+};
+
+export const endDuelIfVictory = async (
   duelId: number,
   duel,
   opponentHealth
@@ -138,7 +238,7 @@ export const isCharacterOwnedByUser = async (
 
     const result = await pool.query(query, values);
 
-    return result.rows[0].count > 0; // Returns true if the character belongs to the user
+    return result.rows[0].count > 0;
   } catch (error) {
     logger.error(`Error checking character ownership: ${error.message}`);
     throw new Error("Failed to check character ownership");
@@ -153,16 +253,12 @@ export const getCharacterHealth = async (characterId: number) => {
   return result.rows.length > 0 ? result.rows[0].health : null;
 };
 
-export const updateCharacterHealth = async (
-  targetId: number,
-  newHealth: number
-) => {
+export const updateCharacterHealth = async (target: any, newHealth: number) => {
   try {
     const query = `UPDATE foreign_characters SET health = $1 WHERE id = $2`;
-    const values = [newHealth, targetId];
+    const values = [newHealth, target.id];
 
     await pool.query(query, values);
-    logger.info(`Updated health to ${newHealth} for character ID ${targetId}`);
   } catch (error) {
     logger.error(`Error updating health: ${error.message}`);
   }
