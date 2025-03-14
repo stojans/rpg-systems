@@ -1,7 +1,7 @@
 import { createPool } from "../../../shared/db";
 import { Request, Response } from "express";
 import { getUserIdFromToken } from "./authHelpers";
-import logger from "shared/logger";
+import logger from "../../../shared/logger";
 
 const pool = createPool("combat");
 

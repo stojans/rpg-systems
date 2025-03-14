@@ -13,6 +13,7 @@
   "include": [
     "account-service/**/*.ts",
     "character-service/**/*.ts",
+    "combat-service/**/*.ts",
     "shared/*.ts"
   ],
   "exclude": ["node_modules", "dist"]

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Account Service
   account-service:
@@ -43,6 +41,27 @@ services:
       - ./shared:/usr/src/app/shared # Mount the shared folder
     ports:
       - "3002:3002"
+
+  combat-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: combat-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: combat_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      COMBAT_PORT: 3003
+      COMBAT_DB_URL: postgres://postgres:password@postgres:5432/combat_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3003:3003"
 
   # Postgres database service (example)
   postgres:
