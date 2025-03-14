@@ -1,8 +1,6 @@
 exports.seed = async function (knex) {
-  // Deletes ALL existing entries
   await knex("characters").del();
 
-  // Inserts seed entries
   await knex("characters").insert([
     {
       name: "Aragorn",
@@ -13,7 +11,7 @@ exports.seed = async function (knex) {
       base_intelligence: 10,
       base_faith: 8,
       character_class: "Warrior",
-      created_by: 1, // assuming user with id 1
+      created_by: 1,
     },
     {
       name: "Gandalf",
@@ -24,7 +22,7 @@ exports.seed = async function (knex) {
       base_intelligence: 25,
       base_faith: 20,
       character_class: "Mage",
-      created_by: 2, // assuming user with id 2
+      created_by: 2,
     },
     {
       name: "Legolas",
@@ -35,7 +33,7 @@ exports.seed = async function (knex) {
       base_intelligence: 12,
       base_faith: 10,
       character_class: "Archer",
-      created_by: 3, // assuming user with id 3
+      created_by: 3,
     },
   ]);
 };

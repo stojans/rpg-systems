@@ -4,7 +4,7 @@ import { getUserIdFromToken } from "../helpers/authHelpers";
 import * as dbHelpers from "../helpers/dbHelpers";
 import logger from "../../../shared/logger";
 import { hasFiveMinutesPassed } from "../helpers/dbHelpers";
-import redis from "shared/redis";
+import redis from "../../../shared/redis";
 
 const getCharacterDetails = async (characterId: number, token: string) => {
   try {

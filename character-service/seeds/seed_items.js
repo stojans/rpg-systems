@@ -1,8 +1,6 @@
 exports.seed = async function (knex) {
-  // Delete existing data to prevent duplicates
   await knex("items").del();
 
-  // Insert default items
   await knex("items").insert([
     {
       name: "Sword",

@@ -113,7 +113,6 @@ export const getCharacterWithItems = async (
         bonus_faith: row.bonus_faith,
       };
 
-      // Add the item to the character's items array
       character.items.push(item);
 
       // Calculate total bonus stats from all items
@@ -180,7 +179,6 @@ export const createCharacter = async (
 
   const user_id = req.user?.userId;
 
-  // Check if user exists
   if (!user_id) {
     logger.error(`User ID ${user_id} not found!\n`);
     res.status(401).json({ message: "Unauthorized, user not found." });
@@ -237,6 +235,4 @@ export const createCharacter = async (
     message: `Character ${req.body.name} created!`,
     character: result.rows[0],
   });
-
-  //   return result.rows[0];
 };

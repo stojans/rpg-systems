@@ -238,7 +238,7 @@ export const isCharacterOwnedByUser = async (
 
     const result = await pool.query(query, values);
 
-    return result.rows[0].count > 0; // Returns true if the character belongs to the user
+    return result.rows[0].count > 0;
   } catch (error) {
     logger.error(`Error checking character ownership: ${error.message}`);
     throw new Error("Failed to check character ownership");
