@@ -2,7 +2,8 @@
   "name": "account-service",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node index.ts"
+    "dev": "ts-node index.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "knex": "^3.1.0",

@@ -11,8 +11,6 @@
   },
   "include": [
     "account-service/src/**/*.ts",
-    "character-service/src/**/*.ts",
-    "combat-service/src/**/*.ts",
     "shared/src/**/*.ts",
     "shared/logger.ts",
     "shared/redis.ts",

@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  # Account Service
+  account-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: account-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: account_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      ACCOUNT_PORT: 3001
+      ACCOUNT_DB_URL: postgres://postgres:password@postgres:5432/account_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3001:3001"
+
+  # Postgres database service (example)
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: account_service
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Redis (for caching purposes)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+    driver: local

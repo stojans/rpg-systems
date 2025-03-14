@@ -56,8 +56,6 @@ const transferItemToWinner = async (
       }
     );
 
-    logger.info(`${response.data}`);
-
     return response.data;
   } catch (error) {
     logger.error(`Error transfering items: ${error.message}`);
