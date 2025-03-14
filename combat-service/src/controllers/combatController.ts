@@ -120,28 +120,31 @@ export const performAction = async (
         : characterDetails.id;
 
     let target = null;
+    let targetHealth = 0;
     let amount: number;
 
     switch (action) {
       case "attack":
         target = await getCharacterDetails(targetId, token);
+        targetHealth = await dbHelpers.getCharacterHealth(targetId);
         amount =
           characterDetails.total_stats.strength +
           characterDetails.total_stats.agility;
         break;
       case "cast":
         target = await getCharacterDetails(targetId, token);
+        targetHealth = await dbHelpers.getCharacterHealth(targetId);
         amount = characterDetails.total_stats.intelligence * 2;
         break;
       case "heal":
         target = characterDetails;
         amount = characterDetails.total_stats.faith;
+        targetHealth = characterDetails.health;
+
         break;
       default:
         throw new Error("Invalid action type");
     }
-
-    let targetHealth = await dbHelpers.getCharacterHealth(targetId);
 
     let newHealth =
       action === "attack" || "cast"
@@ -153,7 +156,7 @@ export const performAction = async (
       duel,
       characterDetails,
       target,
-      targetHealth,
+      newHealth,
       action,
       amount
     );

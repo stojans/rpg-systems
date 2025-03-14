@@ -2,7 +2,7 @@
   "name": "character-service",
   "scripts": {
     "start": "node dist/account-service/index.js",
-    "dev": "ts-node index.ts",
+    "dev": "ts-node ./src/index.ts",
     "build": "tsc"
   },
   "dependencies": {

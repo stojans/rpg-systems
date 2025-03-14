@@ -5,7 +5,7 @@ import logger from "../../../shared/logger";
 
 const pool = createPool("combat");
 
-const DUEL_TIME_LIMIT = 5 * 1000;
+const DUEL_TIME_LIMIT = 5 * 60 * 1000;
 
 export const getDuelById = async (duelId: number) => {
   const result = await pool.query(`SELECT * FROM duels WHERE id = $1`, [
@@ -83,7 +83,7 @@ export const storeAction = async (
     const query = `
       INSERT INTO duel_actions 
         (duel_id, turn, actor_id, actor_name, 
-         action, amount, target_id, target_name, target_health, timestamp) 
+         action, amount, target_id, target_name, resulting_target_health, timestamp) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) 
       RETURNING *;
     `;

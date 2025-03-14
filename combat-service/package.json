@@ -2,7 +2,7 @@
   "name": "combat-service",
   "scripts": {
     "start": "node dist/combat-service/index.js",
-    "dev": "ts-node index.ts",
+    "dev": "ts-node ./src/index.ts",
     "build": "tsc"
   },
   "dependencies": {

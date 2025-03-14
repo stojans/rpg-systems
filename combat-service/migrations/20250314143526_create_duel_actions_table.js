@@ -16,7 +16,7 @@ exports.up = function (knex) {
     // Target (the one receiving the action)
     table.integer("target_id").unsigned();
     table.string("target_name");
-    table.integer("target_health");
+    table.integer("resulting_target_health");
 
     table.timestamp("timestamp").defaultTo(knex.fn.now());
   });
