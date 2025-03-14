@@ -23,6 +23,27 @@ services:
     ports:
       - "3001:3001"
 
+  character-service:
+    build:
+      context: ./ # Set the context to the root of the project
+      dockerfile: character-service/Dockerfile # Specify the Dockerfile for the account-service
+    container_name: character_service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      CHARACTER_PORT: 3002
+      CHARACTER_DB_URL: postgres://postgres:password@postgres:5432/character_service
+      JWT_SECRET: your_jwt_secret_key
+      REDIS_HOST: redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./shared:/usr/src/app/shared # Mount the shared folder
+    ports:
+      - "3002:3002"
+
   # Postgres database service (example)
   postgres:
     image: postgres:15
@@ -30,9 +51,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: account_service
+      # POSTGRES_DB: account_service
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # Mount the init script
     ports:
       - "5432:5432"
     healthcheck:

@@ -5,7 +5,7 @@
     "module": "NodeNext",
     "outDir": "../dist",
     "sourceMap": true,
-    "rootDir": "../" // Set rootDir to the project root
+    "rootDir": "../"
   },
   "include": ["src/**/*.ts", "../shared/**/*.ts"]
 }
