@@ -4,6 +4,7 @@ import { getUserIdFromToken } from "../helpers/authHelpers";
 import * as dbHelpers from "../helpers/dbHelpers";
 import logger from "../../../shared/logger";
 import { hasFiveMinutesPassed } from "../helpers/dbHelpers";
+import redis from "shared/redis";
 
 const getCharacterDetails = async (characterId: number, token: string) => {
   try {
@@ -146,8 +147,16 @@ export const performAction = async (
         throw new Error("Invalid action type");
     }
 
+    await redis.del(`character:${targetId}`);
+    logger.info(`Removed character with ID ${targetId} from cache!\n`);
+
+    await redis.del(`character:${characterDetails.id}`);
+    logger.info(
+      `Removed character with ID ${characterDetails.id} from cache!\n`
+    );
+
     let newHealth =
-      action === "attack" || "cast"
+      action === "attack" || action === "cast"
         ? Math.max(targetHealth - amount, 0)
         : targetHealth + amount; // Ensure healing doesn't exceed max health
 
@@ -161,11 +170,6 @@ export const performAction = async (
       amount
     );
     await dbHelpers.updateDuelTurn(duelId);
-    logger.info(
-      `${characterDetails.name} used ${action.toUpperCase()} on ${
-        target.name
-      } for ${amount} damage!\n ${target.name} HP: ${newHealth}\n`
-    );
     if (action === "attack" || action === "cast") {
       const duelEnded = await dbHelpers.endDuelIfVictory(
         duelId,
