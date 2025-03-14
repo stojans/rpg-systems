@@ -17,7 +17,7 @@ const getCharacterDetails = async (characterId: number, token: string) => {
     );
     logger.info(`Fetched character with ID ${characterId}!`);
 
-    return response.data.characterWithItems;
+    return response.data;
   } catch (error) {
     logger.error(`Error fetching character details: ${error.message}`);
     throw new Error("Error fetching character details: " + error.message);

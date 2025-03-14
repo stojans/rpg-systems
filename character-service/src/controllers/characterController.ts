@@ -15,7 +15,7 @@ export const getAllCharacters = async (
   try {
     const characters = await getCharacters();
     logger.info(`Characters fetched!`);
-    res.status(201).json({ characters });
+    res.status(200).json({ characters });
   } catch (error) {
     logger.error(`Error fetching character: ${error}`);
 
@@ -136,11 +136,17 @@ export const getCharacterWithItems = async (
       total_stats: calculatedStats,
     };
 
-    await redis.set(cacheKey, JSON.stringify(characterWithItems), "EX", 3600);
+    await redis.set(
+      cacheKey,
+      JSON.stringify({ ...character, total_stats: calculatedStats }),
+      "EX",
+      3600
+    );
     logger.info(`Cached character ID: ${characterId}`);
 
     res.status(200).json({
-      characterWithItems,
+      ...character,
+      total_stats: calculatedStats,
     });
   } catch (error) {
     logger.error(`Error fetching character ID ${characterId}: ${error}`);
