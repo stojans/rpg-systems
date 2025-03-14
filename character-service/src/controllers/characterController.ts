@@ -14,10 +14,10 @@ export const getAllCharacters = async (
 ): Promise<void> => {
   try {
     const characters = await getCharacters();
-    logger.info(`Characters fetched!`);
+    logger.info(`Characters fetched!\n`);
     res.status(200).json({ characters });
   } catch (error) {
-    logger.error(`Error fetching character: ${error}`);
+    logger.error(`Error fetching character: ${error}\n`);
 
     res.status(500).json({ message: "Server error" });
     return;
@@ -25,7 +25,7 @@ export const getAllCharacters = async (
 };
 
 const getCharacters = async () => {
-  logger.info(`Fetching characters...`);
+  logger.info(`Fetching characters...\n`);
   const result = await pool.query("SELECT name, health, mana FROM characters");
   return result.rows;
 };
@@ -37,11 +37,11 @@ export const getCharacterWithItems = async (
   const characterId = parseInt(req.params.id);
   const cacheKey = `character:${characterId}`;
 
-  logger.info(`Fetching character data for ID: ${characterId}`);
+  // logger.info(`Fetching character data for ID: ${characterId}\n`);
 
   const cachedCharacter = await redis.get(cacheKey);
   if (cachedCharacter) {
-    logger.info(`Returning character from cache: ${characterId}`);
+    logger.info(`Returning character from cache: ${characterId}\n`);
     res.status(200).json(JSON.parse(cachedCharacter));
     return;
   }
@@ -74,7 +74,7 @@ export const getCharacterWithItems = async (
     );
 
     if (result.rows.length === 0) {
-      logger.error(`Character ID ${characterId} not found!`);
+      logger.error(`Character ID ${characterId} not found!\n`);
       res.status(404).json({ message: "Character not found" });
       return;
     }
@@ -142,14 +142,14 @@ export const getCharacterWithItems = async (
       "EX",
       3600
     );
-    logger.info(`Cached character ID: ${characterId}`);
+    logger.info(`Cached character ID: ${characterId}\n`);
 
     res.status(200).json({
       ...character,
       total_stats: calculatedStats,
     });
   } catch (error) {
-    logger.error(`Error fetching character ID ${characterId}: ${error}`);
+    logger.error(`Error fetching character ID ${characterId}: ${error}\n`);
     res.status(500).json({ message: "Server error" });
     return;
   }
@@ -182,13 +182,13 @@ export const createCharacter = async (
 
   // Check if user exists
   if (!user_id) {
-    logger.error(`User ID ${user_id} not found!`);
+    logger.error(`User ID ${user_id} not found!\n`);
     res.status(401).json({ message: "Unauthorized, user not found." });
     return;
   }
 
   if (!(await getUserById(user_id))) {
-    logger.error(`User with ID ${user_id} not found!`);
+    logger.error(`User with ID ${user_id} not found!\n`);
     res.status(404).json({ message: "User not found" });
     return;
   }
@@ -197,7 +197,7 @@ export const createCharacter = async (
   if (
     !Object.values(CharacterClass).includes(character_class as CharacterClass)
   ) {
-    logger.error(`Invalid Character class!`);
+    logger.error(`Invalid Character class!\n`);
     res
       .status(400)
       .json({ message: `Invalid character class "${character_class}".` });
@@ -210,7 +210,7 @@ export const createCharacter = async (
     [req.body.name]
   );
   if (nameCheck && nameCheck.rowCount && nameCheck.rowCount > 0) {
-    logger.error(`Character named "${req.body.name}" already exists!`);
+    logger.error(`Character named "${req.body.name}" already exists!\n`);
     res
       .status(400)
       .json({ message: `Character name "${req.body.name}" already exists.` });
@@ -231,7 +231,7 @@ export const createCharacter = async (
       user_id,
     ]
   );
-  logger.info(`Character named "${req.body.name}" created!`);
+  logger.info(`Character "${req.body.name}" created!\n`);
 
   res.status(201).json({
     message: `Character ${req.body.name} created!`,

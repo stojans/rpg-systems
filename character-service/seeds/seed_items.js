@@ -5,22 +5,22 @@ exports.seed = async function (knex) {
   // Insert default items
   await knex("items").insert([
     {
-      name: "Sword of Strength",
-      description: "A mighty sword",
+      name: "Sword",
+      description: "A mighty sword that grants strength",
       bonus_strength: 5,
     },
     {
-      name: "Agility Boots",
+      name: "Boots",
       description: "Boots that increase agility",
       bonus_agility: 3,
     },
     {
-      name: "Wizard Hat",
-      description: "A hat that boosts intelligence",
+      name: "Staff",
+      description: "A staff that boosts intelligence",
       bonus_intelligence: 4,
     },
     {
-      name: "Faith Ring",
+      name: "Ring",
       description: "A ring that enhances faith",
       bonus_faith: 2,
     },

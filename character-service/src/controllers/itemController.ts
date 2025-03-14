@@ -12,17 +12,17 @@ export const getAllItems = async (
 ): Promise<void> => {
   try {
     const items = await getItems();
-    logger.info(`Items fetched`);
+    logger.info(`Items fetched\n`);
     res.status(201).json({ items });
   } catch (error) {
-    logger.error(`Error fetching items: ${error}`);
+    logger.error(`Error fetching items: ${error}\n`);
     res.status(500).json({ message: "Server error" });
     return;
   }
 };
 
 export const getItems = async () => {
-  logger.info(`Fetching items...`);
+  logger.info(`Fetching items...\n`);
   const result = await pool.query("SELECT * FROM items");
   return result.rows;
 };
@@ -40,7 +40,7 @@ export const createItem = async (
     name,
   }: Item = req.body;
 
-  logger.info(`Creating item...`);
+  logger.info(`Creating item...\n`);
 
   const result = await pool.query(
     "INSERT INTO items (name, description, bonus_strength, bonus_agility, bonus_intelligence, bonus_faith) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
@@ -54,7 +54,7 @@ export const createItem = async (
     ]
   );
 
-  logger.info(`Item "${name}" created!`);
+  logger.info(`"${name}" created!\n`);
 
   res.status(201).json({ message: `Item ${name} created!` });
 };
@@ -63,14 +63,14 @@ export const getItemDetails = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  logger.info(`Fetching item details for ID: ${req.params.id}...`);
+  logger.info(`Fetching item details for ID: ${req.params.id}...\n`);
   try {
     const result = await pool.query("SELECT * FROM items WHERE id = $1", [
       req.params.id,
     ]);
 
     if (result.rows.length === 0) {
-      logger.error(`Item with ID ${req.params.id} not found!`);
+      logger.error(`Item with ID ${req.params.id} not found!\n`);
       res.status(404).json({ message: "Item not found" });
       return;
     }
@@ -113,11 +113,11 @@ export const getItemDetails = async (
 
     item.name = itemNameWithSuffix;
 
-    logger.info(`Item details fetched!`);
+    logger.info(`Item details fetched!\n`);
 
     res.status(200).json({ item: item });
   } catch (error) {
-    logger.error(`Error fetching item details: ${error}`);
+    logger.error(`Error fetching item details: ${error}\n`);
     res.status(500).json({ message: "Server error" });
     return;
   }
@@ -135,14 +135,14 @@ export const assignItemToChar = async (
       [character_id, item_id]
     );
     logger.info(
-      `Item with ID ${item_id} assigned to character with ID ${character_id}!`
+      `Item with ID ${item_id} assigned to character with ID ${character_id}!\n`
     );
 
     res.status(201).json({
       message: `Item with ID ${item_id} assigned to character with ID ${character_id}!`,
     });
   } catch (error) {
-    logger.error(`Error asigning item: ${error.message}`);
+    logger.error(`Error asigning item: ${error.message}\n`);
     res.status(500).json({ error: "Server error" });
     return;
   }
@@ -156,7 +156,7 @@ export const transferItem = async (
 
   if (!item_id || !character_from_id || !character_to_id) {
     logger.error(
-      `Item ID, source character ID and destination character ID are required!`
+      `Item ID, source character ID and destination character ID are required!\n`
     );
     res.status(400).json({
       message:
@@ -181,18 +181,18 @@ export const transferItem = async (
     await pool.query("COMMIT");
 
     await redis.del(`character:${character_from_id}`);
-    logger.info(`Removed character with ID ${character_from_id} from cache!`);
+    logger.info(`Removed character with ID ${character_from_id} from cache!\n`);
     await redis.del(`character:${character_to_id}`);
-    logger.info(`Removed character with ID ${character_to_id} from cache!`);
+    logger.info(`Removed character with ID ${character_to_id} from cache!\n`);
 
     logger.info(
-      `Item with ID ${item_id} transferred from character with ID ${character_from_id} to character with ID ${character_to_id}`
+      `Item with ID ${item_id} transferred from character with ID ${character_from_id} to character with ID ${character_to_id}!\n`
     );
 
     res.status(200).json({ message: "Item transferred successfully." });
   } catch (error) {
     await pool.query("ROLLBACK");
-    logger.error(`Error transfering items: ${error.message}`);
+    logger.error(`Error transfering items: ${error.message}\n`);
 
     res.status(500).json({ message: "Server error during item transfer." });
     return;

@@ -3,6 +3,7 @@ import axios from "axios";
 import { getUserIdFromToken } from "../helpers/authHelpers";
 import * as dbHelpers from "../helpers/dbHelpers";
 import logger from "../../../shared/logger";
+import { hasFiveMinutesPassed } from "../helpers/dbHelpers";
 
 const getCharacterDetails = async (characterId: number, token: string) => {
   try {
@@ -15,7 +16,7 @@ const getCharacterDetails = async (characterId: number, token: string) => {
         },
       }
     );
-    logger.info(`Fetched character with ID ${characterId}!`);
+    // logger.info(`Fetched character with ID ${characterId}!`);
 
     return response.data;
   } catch (error) {
@@ -24,17 +25,14 @@ const getCharacterDetails = async (characterId: number, token: string) => {
   }
 };
 
-const transferItemToWinner = async (
-  winnerId: number,
-  loser: any,
-  token: string
-) => {
+const transferItemToWinner = async (winner: any, loser: any, token: string) => {
   const items = loser.items;
   let randomItemId: number | null = null;
 
   if (items && items.length > 0) {
     const randomItem = items[Math.floor(Math.random() * items.length)];
     randomItemId = randomItem.id;
+    logger.info(`${winner.name} loots ${randomItem.name}!\n`);
   } else {
     logger.info(`No items available for transfer`);
     return;
@@ -46,7 +44,7 @@ const transferItemToWinner = async (
       {
         item_id: randomItemId,
         character_from_id: loser.id,
-        character_to_id: winnerId,
+        character_to_id: winner.id,
       },
       {
         headers: {
@@ -86,6 +84,13 @@ export const performAction = async (
     return res.status(400).json({ message: "Duel not found or already ended" });
   }
 
+  if (await hasFiveMinutesPassed(duelId)) {
+    return res.status(403).json({
+      message: `Can't ${action}. Duel expired.`,
+      duelId: duelId,
+    });
+  }
+
   try {
     const characterDetails = await getCharacterDetails(
       duel.current_turn_character_id,
@@ -114,63 +119,73 @@ export const performAction = async (
           : duel.character_1_id
         : characterDetails.id;
 
-    let targetHealth = await dbHelpers.getCharacterHealth(targetId);
-
-    const target = await getCharacterDetails(targetId, token);
-
+    let target = null;
     let amount: number;
 
     switch (action) {
       case "attack":
+        target = await getCharacterDetails(targetId, token);
         amount =
           characterDetails.total_stats.strength +
           characterDetails.total_stats.agility;
         break;
       case "cast":
+        target = await getCharacterDetails(targetId, token);
         amount = characterDetails.total_stats.intelligence * 2;
         break;
       case "heal":
+        target = characterDetails;
         amount = characterDetails.total_stats.faith;
         break;
       default:
         throw new Error("Invalid action type");
     }
 
+    let targetHealth = await dbHelpers.getCharacterHealth(targetId);
+
     let newHealth =
       action === "attack" || "cast"
         ? Math.max(targetHealth - amount, 0)
         : targetHealth + amount; // Ensure healing doesn't exceed max health
 
-    await dbHelpers.updateCharacterHealth(targetId, newHealth);
-
+    await dbHelpers.updateCharacterHealth(target, newHealth);
+    await dbHelpers.storeAction(
+      duel,
+      characterDetails,
+      target,
+      targetHealth,
+      action,
+      amount
+    );
+    await dbHelpers.updateDuelTurn(duelId);
+    logger.info(
+      `${characterDetails.name} used ${action.toUpperCase()} on ${
+        target.name
+      } for ${amount} damage!\n ${target.name} HP: ${newHealth}\n`
+    );
     if (action === "attack" || action === "cast") {
-      const duelEnded = await dbHelpers.endDuelIfNecessary(
+      const duelEnded = await dbHelpers.endDuelIfVictory(
         duelId,
         duel,
         newHealth
       );
       if (duelEnded) {
-        transferItemToWinner(characterDetails.id, target, token);
-        logger.info(
-          `Character with ID ${characterDetails.id} wins duel with ID ${duelId}!`
-        );
+        logger.info(`${characterDetails.name} WINS duel ${duelId}!\n`);
+        transferItemToWinner(characterDetails, target, token);
 
         return res.status(200).json({
-          message: "Attack successful. Duel ended!",
+          message: `${action.toUpperCase()} successful. Duel ended!`,
           winnerId: duel.winner_id,
           winnerName: characterDetails.name,
         });
       }
     }
 
-    await dbHelpers.updateDuelTurn(duelId);
-    logger.info(`${action} successful, ending turn ${duel.turn}!`);
     res.status(200).json({
-      message: `${
-        action.charAt(0).toUpperCase() + action.slice(1)
-      } successful. Turn ${duel.turn} ended.`,
+      message: `${action.toUpperCase()} successful. Turn ${duel.turn} ended.`,
+      target: target.name,
       remaining_health: newHealth,
-      currentTurn: duel.current_turn_character_id,
+      currentTurn: duel.turn,
     });
   } catch (error) {
     logger.error(`Error performing ${action}: ${error.message}`);
