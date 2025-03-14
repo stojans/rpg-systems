@@ -1,0 +1,839 @@
+{
+	"info": {
+		"_postman_id": "6acdaa39-0ab1-4bd9-8169-53de919c4cc4",
+		"name": "Combat Test",
+		"description": "Once executed with a runner, this collection will go through requests simulating one duel between characters. Requests use Environment variables, pre-request and post-response scripts to handle user authentication via Bearer tokens.\n\nTwo users log in, save their tokens in environment variables, and take turns taking combat actions.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29273272"
+	},
+	"item": [
+		{
+			"name": "Register User1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"admin\",\r\n  \"password\": \"admin\",\r\n  \"role\": \"GameMaster\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3001/api/auth/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3001",
+					"path": [
+						"api",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register User2",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"stefan\",\r\n  \"password\": \"stefan\",\r\n  \"role\": \"User\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3001/api/auth/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3001",
+					"path": [
+						"api",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login User1",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {\r",
+							"  const token = pm.response.json().token;\r",
+							"  if (token) {\r",
+							"    pm.environment.set('user1_token', token);  // Store the token for user1\r",
+							"    console.log('Token for User 1 stored successfully');\r",
+							"  } else {\r",
+							"    console.log('Token not found in the response');\r",
+							"  }\r",
+							"} else {\r",
+							"  console.log('Login failed with status:', pm.response.code);\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3001/api/auth/login/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3001",
+					"path": [
+						"api",
+						"auth",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login User2",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {\r",
+							"  const token = pm.response.json().token;\r",
+							"  if (token) {\r",
+							"    pm.environment.set('user2_token', token);  // Store the token for user2\r",
+							"    console.log('Token for User 2 stored successfully');\r",
+							"  } else {\r",
+							"    console.log('Token not found in the response');\r",
+							"  }\r",
+							"} else {\r",
+							"  console.log('Login failed with status:', pm.response.code);\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"stefan\",\r\n  \"password\": \"stefan\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3001/api/auth/login/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3001",
+					"path": [
+						"api",
+						"auth",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create  Character User1",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Function to decode JWT token\r",
+							"function decodeJwt(token) {\r",
+							"    const base64Url = token.split('.')[1]; // Get the payload part of the JWT\r",
+							"    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/'); // Correct the base64 format\r",
+							"    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {\r",
+							"        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);\r",
+							"    }).join(''));\r",
+							"    return JSON.parse(jsonPayload); // Parse the decoded string into JSON\r",
+							"}\r",
+							"\r",
+							"// Get the token from environment\r",
+							"const token = pm.environment.get('current_user_token'); // Replace with the appropriate token variable\r",
+							"\r",
+							"// Decode the token and extract user ID\r",
+							"const decodedToken = decodeJwt(token);\r",
+							"\r",
+							"// Assuming the ID is stored as `sub` (standard in JWT), replace it with the actual field if different\r",
+							"const userId = decodedToken.sub; \r",
+							"\r",
+							"// Set the user ID in the request body (you can use it in the request body directly)\r",
+							"pm.environment.set('user_id', userId); // Store the user ID in environment variable\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Ensure the response is successful\r",
+							"if (pm.response.code === 201 || pm.response.code === 200) {\r",
+							"    const responseData = pm.response.json();  // Parse JSON response\r",
+							"\r",
+							"    if (responseData.character && responseData.character.id) {\r",
+							"        pm.environment.set(\"gm_char_id\", responseData.character.id);  // Store the character ID\r",
+							"        console.log(\"Character ID stored:\", responseData.character.id);\r",
+							"    } else {\r",
+							"        console.log(\"Character ID not found in response!\");\r",
+							"    }\r",
+							"} else {\r",
+							"    console.log(\"Character creation failed!\");\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Mage 1\",\r\n  \"character_class\": \"Mage\",\r\n  \"health\": 75,\r\n  \"mana\": 50,\r\n  \"base_strength\": 2,\r\n  \"base_agility\": 3,\r\n  \"base_intelligence\": 10,\r\n  \"base_faith\": 5,\r\n  \"created_by\": {{user_id}}\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3002/api/character/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"character",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Grant item User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"item_id\": 4,\r\n    \"character_id\": {{gm_char_id}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3002/api/items/grant",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"items",
+						"grant"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Grant item User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"item_id\": 2,\r\n    \"character_id\": {{gm_char_id}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3002/api/items/grant",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"items",
+						"grant"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create  Character User2",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Function to decode JWT token\r",
+							"function decodeJwt(token) {\r",
+							"    const base64Url = token.split('.')[1]; // Get the payload part of the JWT\r",
+							"    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/'); // Correct the base64 format\r",
+							"    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {\r",
+							"        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);\r",
+							"    }).join(''));\r",
+							"    return JSON.parse(jsonPayload); // Parse the decoded string into JSON\r",
+							"}\r",
+							"\r",
+							"// Get the token from environment\r",
+							"const token = pm.environment.get('current_user_token'); // Replace with the appropriate token variable\r",
+							"\r",
+							"// Decode the token and extract user ID\r",
+							"const decodedToken = decodeJwt(token);\r",
+							"\r",
+							"// Assuming the ID is stored as `sub` (standard in JWT), replace it with the actual field if different\r",
+							"const userId = decodedToken.sub; \r",
+							"\r",
+							"// Set the user ID in the request body (you can use it in the request body directly)\r",
+							"pm.environment.set('user_id', userId); // Store the user ID in environment variable\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Ensure the response is successful\r",
+							"if (pm.response.code === 201 || pm.response.code === 200) {\r",
+							"    const responseData = pm.response.json();  // Parse JSON response\r",
+							"\r",
+							"    if (responseData.character && responseData.character.id) {\r",
+							"        pm.environment.set(\"user_char_id\", responseData.character.id);  // Store the character ID\r",
+							"        console.log(\"Character ID stored:\", responseData.character.id);\r",
+							"    } else {\r",
+							"        console.log(\"Character ID not found in response!\");\r",
+							"    }\r",
+							"} else {\r",
+							"    console.log(\"Character creation failed!\");\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Warrior 1\",\r\n  \"character_class\": \"Warrior\",\r\n  \"health\": 100,\r\n  \"mana\": 50,\r\n  \"base_strength\": 15,\r\n  \"base_agility\": 10,\r\n  \"base_intelligence\": 1,\r\n  \"base_faith\": 4,\r\n  \"created_by\": {{user_id}}\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3002/api/character/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"character",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Assign item User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"item_id\": 1,\r\n    \"character_id\": {{user_char_id}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3002/api/items/grant",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"items",
+						"grant"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge User2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Ensure the response is successful\r",
+							"if (pm.response.code === 201 || pm.response.code === 200) {\r",
+							"    const responseData = pm.response.json();  // Parse JSON response\r",
+							"\r",
+							"    if (responseData && responseData.duelId) {\r",
+							"        pm.environment.set(\"duel_id\", responseData.duelId);  // Store the duel ID\r",
+							"        console.log(\"Duel ID stored:\", responseData.duelId);\r",
+							"    } else {\r",
+							"        console.log(\"Duel ID not found in response!\");\r",
+							"    }\r",
+							"} else {\r",
+							"    console.log(\"Duel creation failed!\");\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"characterId\": {{user_char_id}},\r\n    \"opponentCharacterId\": {{gm_char_id}}\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3003/api/challenge/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"challenge",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Attack User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/attack",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"attack"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Attack User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/attack",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"attack"
+					],
+					"query": [
+						{
+							"key": "Authorization",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Heal User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/heal",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"heal"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cast User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/cast",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"cast"
+					],
+					"query": [
+						{
+							"key": "Authorization",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cast User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/cast",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"cast"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Heal User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/heal",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"heal"
+					],
+					"query": [
+						{
+							"key": "Authorization",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Attack User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/attack",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"attack"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Heal User1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user1_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/heal",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"heal"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Attack User2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{user2_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3003/api/{{duel_id}}/attack",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3003",
+					"path": [
+						"api",
+						"{{duel_id}}",
+						"attack"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
